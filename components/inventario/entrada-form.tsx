@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
 import { Loader2, PackagePlus } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { registrarEntrada, type FormState } from "@/app/(app)/inventario/actions";
+import type { ProveedorBasico } from "@/lib/data/proveedores-shared";
 
 type ProductoOpcion = {
   id: string;
@@ -29,12 +31,16 @@ function SubmitButton() {
 
 export function EntradaForm({
   productos,
+  proveedores,
   defaultProductoId,
 }: {
   productos: ProductoOpcion[];
+  proveedores: ProveedorBasico[];
   defaultProductoId?: string;
 }) {
   const [state, action] = useFormState(registrarEntrada, {} as FormState);
+  const [proveedorId, setProveedorId] = useState("");
+  const proveedorNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? "";
 
   return (
     <form action={action} className="space-y-6">
@@ -65,7 +71,14 @@ export function EntradaForm({
             <Input name="fecha_entrada" type="date" />
           </Field>
           <Field label="Proveedor" className="sm:col-span-2">
-            <Input name="proveedor" placeholder="Ej. Distribuidora Corripio" />
+            <input type="hidden" name="proveedor_id" value={proveedorId} />
+            <input type="hidden" name="proveedor" value={proveedorNombre} />
+            <Select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)}>
+              <option value="">Sin proveedor</option>
+              {proveedores.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
+            </Select>
           </Field>
         </div>
       </section>

@@ -9,6 +9,7 @@ import {
   Bike,
   FileText,
   Contact,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 import type { Capacidad } from "@/lib/auth/roles";
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Panel", href: "/dashboard", icon: LayoutDashboard, cap: "ver_dashboard" },
   { label: "Punto de venta", href: "/ventas", icon: ShoppingCart, cap: "usar_pos" },
   { label: "Inventario", href: "/inventario", icon: Package, cap: "ver_inventario" },
+  { label: "Proveedores", href: "/proveedores", icon: Truck, cap: "ver_proveedores" },
   { label: "Recetas", href: "/recetas", icon: FileText, cap: "ver_recetas" },
   { label: "Clientes", href: "/clientes", icon: Contact, cap: "ver_clientes" },
   { label: "Delivery", href: "/deliveries", icon: Bike, cap: "ver_deliveries" },
