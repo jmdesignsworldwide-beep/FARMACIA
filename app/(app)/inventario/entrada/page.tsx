@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { EntradaForm } from "@/components/inventario/entrada-form";
 import { getProductosBasico } from "@/lib/data/inventory";
+import { getProveedoresBasico } from "@/lib/data/proveedores";
 import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,10 @@ export default async function EntradaPage({
   searchParams: { producto?: string };
 }) {
   await requireCapability("editar_inventario");
-  const productos = await getProductosBasico();
+  const [productos, proveedores] = await Promise.all([
+    getProductosBasico(),
+    getProveedoresBasico(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -29,7 +33,7 @@ export default async function EntradaPage({
       </Reveal>
 
       <Reveal delay={0.05}>
-        <EntradaForm productos={productos} defaultProductoId={searchParams.producto} />
+        <EntradaForm productos={productos} proveedores={proveedores} defaultProductoId={searchParams.producto} />
       </Reveal>
     </div>
   );

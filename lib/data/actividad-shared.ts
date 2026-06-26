@@ -13,6 +13,7 @@ export const TIPO_LABEL: Record<string, string> = {
   empleado_creado: "Empleado creado",
   empleado_editado: "Empleado editado",
   cliente_registrado: "Cliente registrado",
+  proveedor_registrado: "Proveedor registrado",
   delivery_creado: "Delivery creado",
   delivery_estado: "Delivery actualizado",
   acceso_denegado: "Acceso denegado",

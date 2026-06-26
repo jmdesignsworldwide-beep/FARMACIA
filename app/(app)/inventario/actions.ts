@@ -117,6 +117,7 @@ export async function registrarEntrada(
   const cantidad = Math.trunc(Number(formData.get("cantidad")));
   const vencimiento = String(formData.get("fecha_vencimiento") ?? "");
   const proveedor = String(formData.get("proveedor") ?? "").trim() || null;
+  const proveedor_id = String(formData.get("proveedor_id") ?? "").trim() || null;
   const fecha_entrada =
     String(formData.get("fecha_entrada") ?? "").trim() || null;
 
@@ -126,7 +127,7 @@ export async function registrarEntrada(
     return { error: "La cantidad debe ser mayor que cero." };
   if (!vencimiento) return { error: "La fecha de vencimiento es obligatoria." };
 
-  const { error } = await supabase.rpc("registrar_entrada_mercancia", {
+  const { data: loteId, error } = await supabase.rpc("registrar_entrada_mercancia", {
     p_producto_id: producto_id,
     p_numero_lote: numero_lote,
     p_cantidad: cantidad,
@@ -136,6 +137,11 @@ export async function registrarEntrada(
   });
 
   if (error) return { error: "No se pudo registrar la entrada." };
+
+  // Vincular el lote al proveedor registrado (fuente única).
+  if (proveedor_id && loteId) {
+    await supabase.from("lotes").update({ proveedor_id }).eq("id", loteId);
+  }
 
   revalidatePath("/inventario");
   revalidatePath(`/inventario/${producto_id}`);
