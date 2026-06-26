@@ -106,8 +106,8 @@ export async function getEgresos(cajaId: string): Promise<EgresoRow[]> {
   return (data ?? []) as EgresoRow[];
 }
 
-/** Listado de ventas (busca por folio). */
-export async function getVentas(q?: string): Promise<VentaResumen[]> {
+/** Listado de ventas (busca por folio). Si se pasa empleadoId, solo las suyas. */
+export async function getVentas(q?: string, empleadoId?: string): Promise<VentaResumen[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = createClient();
   let query = supabase
@@ -115,6 +115,7 @@ export async function getVentas(q?: string): Promise<VentaResumen[]> {
     .select("id, folio, total, metodo_pago, estado, empleado_nombre, created_at, venta_items(count)")
     .order("created_at", { ascending: false })
     .limit(80);
+  if (empleadoId) query = query.eq("empleado_id", empleadoId);
   if (q && /^\d+$/.test(q.trim())) query = query.eq("folio", Number(q.trim()));
 
   const { data } = await query;

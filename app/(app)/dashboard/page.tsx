@@ -5,10 +5,12 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AttentionList } from "@/components/dashboard/attention-list";
 import { DaySummary } from "@/components/dashboard/day-summary";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requireCapability("ver_dashboard");
   const data = await getDashboardData();
   const today = new Date().toLocaleDateString("es-DO", {
     weekday: "long",

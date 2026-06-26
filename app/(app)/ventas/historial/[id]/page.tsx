@@ -4,6 +4,8 @@ import { ArrowLeft, Ban, User, FileText, Info } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { AnularVenta } from "@/components/ventas/anular-venta";
 import { getVentaDetalle, metodoLabel } from "@/lib/data/ventas";
+import { requireCapability } from "@/lib/auth/guard";
+import { can } from "@/lib/auth/roles";
 import { formatRD } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +14,12 @@ const fmtVenc = (d: string) =>
   new Date(d).toLocaleDateString("es-DO", { month: "short", year: "numeric" });
 
 export default async function VentaDetallePage({ params }: { params: { id: string } }) {
+  const emp = await requireCapability("usar_pos");
   const detalle = await getVentaDetalle(params.id);
   if (!detalle) notFound();
   const { venta: v, items } = detalle;
   const anulada = v.estado === "anulada";
+  const puedeAnular = can(emp.rol, "ver_ventas_todas");
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -35,7 +39,7 @@ export default async function VentaDetallePage({ params }: { params: { id: strin
               {new Date(v.created_at).toLocaleString("es-DO", { dateStyle: "long", timeStyle: "short" })}
             </p>
           </div>
-          {!anulada && <AnularVenta ventaId={v.id} folio={v.folio} />}
+          {!anulada && puedeAnular && <AnularVenta ventaId={v.id} folio={v.folio} />}
         </div>
       </Reveal>
 

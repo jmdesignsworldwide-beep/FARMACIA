@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { EntradaForm } from "@/components/inventario/entrada-form";
 import { getProductosBasico } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Entrada de mercancía — JM Farmacia" };
@@ -12,6 +13,7 @@ export default async function EntradaPage({
 }: {
   searchParams: { producto?: string };
 }) {
+  await requireCapability("editar_inventario");
   const productos = await getProductosBasico();
 
   return (

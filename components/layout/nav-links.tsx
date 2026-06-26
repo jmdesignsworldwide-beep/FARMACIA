@@ -4,15 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { NAV_ITEMS } from "./nav-items";
+import { can } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 
 /** Lista de enlaces de navegación con resaltado del activo (pill animado). */
-export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+export function NavLinks({ rol, onNavigate }: { rol: string; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const items = NAV_ITEMS.filter((item) => can(rol, item.cap));
 
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active =
           pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;

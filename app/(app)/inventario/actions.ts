@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { checkCapability } from "@/lib/auth/guard";
 
 export type FormState = { error?: string; ok?: boolean };
+
+const SIN_PERMISO = "No tienes permiso para modificar el inventario.";
 
 /** Verifica sesión en el servidor (defensa en profundidad). */
 async function requireUser() {
@@ -54,6 +57,7 @@ export async function crearProducto(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await checkCapability("editar_inventario")).ok) return { error: SIN_PERMISO };
   const { supabase } = await requireUser();
   const p = parseProducto(formData);
   const err = validar(p);
@@ -81,6 +85,7 @@ export async function actualizarProducto(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await checkCapability("editar_inventario")).ok) return { error: SIN_PERMISO };
   const { supabase } = await requireUser();
   const p = parseProducto(formData);
   const err = validar(p);
@@ -104,6 +109,7 @@ export async function registrarEntrada(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await checkCapability("editar_inventario")).ok) return { error: SIN_PERMISO };
   const { supabase } = await requireUser();
 
   const producto_id = String(formData.get("producto_id") ?? "");
@@ -143,6 +149,7 @@ export async function registrarAjuste(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!(await checkCapability("editar_inventario")).ok) return { error: SIN_PERMISO };
   const { supabase } = await requireUser();
 
   const lote_id = String(formData.get("lote_id") ?? "");

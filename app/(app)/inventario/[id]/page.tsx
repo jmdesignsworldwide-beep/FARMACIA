@@ -14,6 +14,7 @@ import { ControladoBadge, RecetaBadge, BajoStockBadge } from "@/components/inven
 import { LotesTabla } from "@/components/inventario/lotes-tabla";
 import { Button } from "@/components/ui/button";
 import { getProductoDetalle } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 import { formatRD } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function ProductoDetallePage({
 }: {
   params: { id: string };
 }) {
+  await requireCapability("ver_inventario");
   const detalle = await getProductoDetalle(params.id);
   if (!detalle) notFound();
   const { producto: p, lotes } = detalle;

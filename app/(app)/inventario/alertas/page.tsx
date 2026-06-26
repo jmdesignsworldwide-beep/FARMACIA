@@ -4,10 +4,12 @@ import { Reveal } from "@/components/motion/reveal";
 import { InventarioNav } from "@/components/inventario/inventario-nav";
 import { VencimientoBadge } from "@/components/inventario/badges";
 import { getLotesPorVencer, getProductos, type LoteConProducto } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AlertasPage() {
+  await requireCapability("ver_inventario");
   const [lotes, productos] = await Promise.all([
     getLotesPorVencer(90),
     getProductos({ bajoStock: true }),
