@@ -7,6 +7,7 @@ export const TIPO_LABEL: Record<string, string> = {
   ajuste_inventario: "Ajuste de inventario",
   receta_despachada: "Receta despachada",
   cambio_precio: "Cambio de precio",
+  receta_registrada: "Receta registrada",
   caja_apertura: "Apertura de caja",
   caja_cierre: "Cierre de caja",
   empleado_creado: "Empleado creado",

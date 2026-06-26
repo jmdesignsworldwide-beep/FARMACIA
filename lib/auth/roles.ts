@@ -27,22 +27,25 @@ export type Capacidad =
   | "gestionar_empleados"
   | "ver_historial"
   | "ver_reportes"
-  | "ver_entregas";
+  | "ver_entregas"
+  | "ver_recetas"
+  | "gestionar_recetas"
+  | "ver_controlados";
 
 const MATRIZ: Record<Rol, Capacidad[]> = {
   dueno: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
-    "ver_reportes", "ver_entregas",
+    "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
   ],
   admin: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
-    "ver_reportes", "ver_entregas",
+    "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
   ],
   farmaceutico: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
-    "editar_inventario",
+    "editar_inventario", "ver_recetas", "gestionar_recetas", "ver_controlados",
   ],
   cajero: ["ver_dashboard", "usar_pos", "usar_caja"],
   motorista: ["ver_entregas"],
