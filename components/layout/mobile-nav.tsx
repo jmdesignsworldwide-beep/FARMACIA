@@ -1,17 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Brand } from "./brand";
 import { NavLinks } from "./nav-links";
 
 /**
- * Menú hamburguesa para móvil. Abre un drawer que SIEMPRE se puede cerrar
- * (botón X, tocar el fondo, o navegar). Nunca deja a la usuaria atrapada.
+ * Menú hamburguesa para móvil. El drawer se renderiza con un PORTAL a
+ * document.body para evitar que el `backdrop-filter` del header (glass)
+ * lo recorte: un ancestro con backdrop-filter se vuelve el containing block
+ * de los hijos `position: fixed`, lo que limitaba el panel al alto del header.
+ * Siempre se puede cerrar (X, fondo, Escape, o al navegar).
  */
 export function MobileNav({ rol }: { rol: string }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Bloquea el scroll del fondo mientras el drawer está abierto.
   useEffect(() => {
@@ -30,6 +37,52 @@ export function MobileNav({ rol }: { rol: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const drawer = (
+    <AnimatePresence>
+      {open && (
+        <div className="lg:hidden">
+          <motion.div
+            className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setOpen(false)}
+          />
+          <motion.aside
+            className="glass-strong fixed left-0 top-0 z-[70] flex h-[100dvh] w-[82%] max-w-xs flex-col gap-5 px-4 shadow-elev-3"
+            style={{
+              paddingTop: "max(1.25rem, env(safe-area-inset-top))",
+              paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
+            }}
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú de navegación"
+          >
+            <div className="flex shrink-0 items-center justify-between px-2">
+              <Brand />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Cerrar menú"
+                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="-mr-1 flex-1 overflow-y-auto overscroll-contain pr-1">
+              <NavLinks rol={rol} onNavigate={() => setOpen(false)} />
+            </div>
+          </motion.aside>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <div className="lg:hidden">
       <button
@@ -42,45 +95,7 @@ export function MobileNav({ rol }: { rol: string }) {
         <Menu className="h-5 w-5" />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.aside
-              className="glass-strong fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col gap-6 px-4 py-6 shadow-elev-3"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 32 }}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Menú de navegación"
-            >
-              <div className="flex items-center justify-between px-2">
-                <Brand />
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-label="Cerrar menú"
-                  className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <NavLinks rol={rol} onNavigate={() => setOpen(false)} />
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {mounted ? createPortal(drawer, document.body) : null}
     </div>
   );
 }
