@@ -5,11 +5,16 @@ import {
   type ProductoConStock,
   type LoteConProducto,
 } from "./inventory";
+import {
+  getVentasHoy,
+  getCajaActual,
+  getCajaResumen,
+  metodoLabel,
+} from "./ventas";
 
 /**
- * Fuente del dashboard. Desde la Tanda 3, "por vencer" y "bajo stock"
- * leen de datos REALES (inventario en Supabase). Ventas y caja siguen
- * siendo demo hasta que el POS (Tanda 4) genere transacciones.
+ * Fuente del dashboard. Todo REAL desde la Tanda 4: ventas y caja leen
+ * del POS; "por vencer" y "bajo stock" leen del inventario (Tanda 3).
  */
 
 export type AttentionItem = {
@@ -66,9 +71,11 @@ function buildAttention(
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const [productos, lotes] = await Promise.all([
+  const [productos, lotes, ventasHoy, caja] = await Promise.all([
     getProductos(),
     getLotesPorVencer(90),
+    getVentasHoy(),
+    getCajaActual(),
   ]);
 
   const bajoStock = productos.filter((p) => p.bajo_stock);
@@ -76,16 +83,27 @@ export async function getDashboardData(): Promise<DashboardData> {
   const within60 = lotes.filter((l) => l.dias_para_vencer <= 60).length;
   const within90 = lotes.length;
 
+  // Caja del día: efectivo esperado en la caja abierta (0 si está cerrada).
+  let cashOnHand = 0;
+  if (caja) cashOnHand = (await getCajaResumen(caja)).efectivoEsperado;
+
+  // Pago más usado hoy.
+  const metodos = Object.entries(ventasHoy.porMetodo).sort((a, b) => b[1] - a[1]);
+  const topPago = metodos[0];
+  const topPaymentMethod = topPago
+    ? { label: metodoLabel(topPago[0]), pct: Math.round((topPago[1] / ventasHoy.total) * 100) }
+    : { label: "—", pct: 0 };
+
   return {
-    // Demo hasta el POS (Tanda 4):
-    salesToday: { amount: 48750.0, transactions: 213 },
-    cashOnHand: { amount: 32480.0 },
+    salesToday: { amount: ventasHoy.total, transactions: ventasHoy.count },
+    cashOnHand: { amount: cashOnHand },
     daySummary: {
-      topPaymentMethod: { label: "Efectivo", pct: 58 },
-      topProduct: { name: "Acetaminofén 500 mg", units: 47 },
-      ticketAverage: 228.87,
+      topPaymentMethod,
+      topProduct: ventasHoy.topProducto
+        ? { name: ventasHoy.topProducto.nombre, units: ventasHoy.topProducto.unidades }
+        : { name: "—", units: 0 },
+      ticketAverage: ventasHoy.ticketPromedio,
     },
-    // Datos REALES de inventario:
     expiring: { within30, within60, within90 },
     lowStock: { count: bajoStock.length },
     attention: buildAttention(lotes, bajoStock),
