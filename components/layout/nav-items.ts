@@ -32,6 +32,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Delivery", href: "/deliveries", icon: Bike, cap: "ver_deliveries" },
   { label: "Empleados", href: "/empleados", icon: Users, cap: "ver_empleados" },
   { label: "Historial", href: "/actividad", icon: History, cap: "ver_historial" },
-  { label: "Reportes", href: "/reportes", icon: BarChart3, cap: "ver_reportes", soon: true },
+  { label: "Reportes", href: "/reportes", icon: BarChart3, cap: "ver_reportes" },
   { label: "Configuración", href: "/configuracion", icon: Settings, cap: "gestionar_empleados", soon: true },
 ];
