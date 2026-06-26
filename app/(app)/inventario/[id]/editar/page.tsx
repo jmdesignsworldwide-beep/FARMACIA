@@ -1,0 +1,37 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Reveal } from "@/components/motion/reveal";
+import { ProductoForm } from "@/components/inventario/producto-form";
+import { getProductoDetalle } from "@/lib/data/inventory";
+import { actualizarProducto } from "../../actions";
+
+export const dynamic = "force-dynamic";
+
+export default async function EditarProductoPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const detalle = await getProductoDetalle(params.id);
+  if (!detalle) notFound();
+  const { producto } = detalle;
+  const action = actualizarProducto.bind(null, params.id);
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <Reveal>
+        <Link href={`/inventario/${params.id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Volver al producto
+        </Link>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Editar {producto.nombre_comercial}
+        </h1>
+      </Reveal>
+
+      <Reveal delay={0.05}>
+        <ProductoForm action={action} producto={producto} submitLabel="Guardar cambios" />
+      </Reveal>
+    </div>
+  );
+}

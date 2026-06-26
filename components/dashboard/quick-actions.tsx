@@ -21,7 +21,7 @@ type Action = {
 };
 
 const ACTIONS: Action[] = [
-  { label: "Entrada de mercancía", href: "/compras", icon: PackagePlus, hint: "Recibir pedido" },
+  { label: "Entrada de mercancía", href: "/inventario/entrada", icon: PackagePlus, hint: "Recibir pedido" },
   { label: "Ver inventario", href: "/inventario", icon: Boxes, hint: "Catálogo y lotes" },
   { label: "Cierre de caja", href: "/reportes", icon: Calculator, hint: "Cuadre del día" },
 ];
