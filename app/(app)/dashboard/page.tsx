@@ -6,6 +6,8 @@ import { AttentionList } from "@/components/dashboard/attention-list";
 import { DaySummary } from "@/components/dashboard/day-summary";
 import { getDashboardData } from "@/lib/data/dashboard";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
   const today = new Date().toLocaleDateString("es-DO", {
