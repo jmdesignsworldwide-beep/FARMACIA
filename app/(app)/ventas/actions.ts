@@ -38,6 +38,8 @@ export type VentaPayload = {
   montoRecibido?: number | null;
   voucher?: string | null;
   receta?: { medico?: string; paciente?: string; numero?: string } | null;
+  clienteId?: string | null;
+  clienteNombre?: string | null;
 };
 
 export type VentaResultado = {
@@ -83,8 +85,18 @@ export async function registrarVenta(
   }
 
   const res = data as { venta_id: string; folio: number; total: number; cambio: number };
+
+  // Asociar el cliente a la venta (fuente única para su historial de compras).
+  if (payload.clienteId) {
+    await supabase
+      .from("ventas")
+      .update({ cliente_id: payload.clienteId, cliente_nombre: payload.clienteNombre ?? null })
+      .eq("id", res.venta_id);
+  }
+
   const detalle = await getVentaDetalle(res.venta_id);
   revalidarVentas();
+  revalidatePath("/clientes");
   return {
     ok: true,
     folio: res.folio,

@@ -30,25 +30,32 @@ export type Capacidad =
   | "ver_entregas"
   | "ver_recetas"
   | "gestionar_recetas"
-  | "ver_controlados";
+  | "ver_controlados"
+  | "ver_clientes"
+  | "gestionar_clientes"
+  | "ver_deliveries"
+  | "gestionar_deliveries";
 
 const MATRIZ: Record<Rol, Capacidad[]> = {
   dueno: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
     "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
+    "ver_clientes", "gestionar_clientes", "ver_deliveries", "gestionar_deliveries",
   ],
   admin: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
     "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
+    "ver_clientes", "gestionar_clientes", "ver_deliveries", "gestionar_deliveries",
   ],
   farmaceutico: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_recetas", "gestionar_recetas", "ver_controlados",
+    "ver_clientes", "gestionar_clientes",
   ],
-  cajero: ["ver_dashboard", "usar_pos", "usar_caja"],
-  motorista: ["ver_entregas"],
+  cajero: ["ver_dashboard", "usar_pos", "usar_caja", "ver_clientes", "gestionar_clientes"],
+  motorista: ["ver_entregas", "ver_deliveries"],
 };
 
 export function can(rol: string | null | undefined, cap: Capacidad): boolean {
@@ -58,7 +65,7 @@ export function can(rol: string | null | undefined, cap: Capacidad): boolean {
 
 /** Página de inicio según el rol (a dónde mandar tras login / accesos denegados). */
 export function homePathForRol(rol: string | null | undefined): string {
-  if (rol === "motorista") return "/entregas";
+  if (rol === "motorista") return "/deliveries";
   if (rol === "cajero") return "/ventas";
   return "/dashboard";
 }
