@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Bike,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import type { Capacidad } from "@/lib/auth/roles";
@@ -23,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Panel", href: "/dashboard", icon: LayoutDashboard, cap: "ver_dashboard" },
   { label: "Punto de venta", href: "/ventas", icon: ShoppingCart, cap: "usar_pos" },
   { label: "Inventario", href: "/inventario", icon: Package, cap: "ver_inventario" },
+  { label: "Recetas", href: "/recetas", icon: FileText, cap: "ver_recetas" },
   { label: "Empleados", href: "/empleados", icon: Users, cap: "ver_empleados" },
   { label: "Historial", href: "/actividad", icon: History, cap: "ver_historial" },
   { label: "Mis entregas", href: "/entregas", icon: Bike, cap: "ver_entregas" },
