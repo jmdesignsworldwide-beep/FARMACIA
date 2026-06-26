@@ -7,6 +7,7 @@ import { InventarioNav } from "@/components/inventario/inventario-nav";
 import { Filtros } from "@/components/inventario/filtros";
 import { ProductoLista } from "@/components/inventario/producto-lista";
 import { getProductos, getInventoryStats } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function InventarioPage({
 }: {
   searchParams: SearchParams;
 }) {
+  await requireCapability("ver_inventario");
   const filtros = {
     q: one(searchParams.q),
     categoria: one(searchParams.categoria),

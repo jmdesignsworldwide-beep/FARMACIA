@@ -10,7 +10,7 @@ import { NavLinks } from "./nav-links";
  * Menú hamburguesa para móvil. Abre un drawer que SIEMPRE se puede cerrar
  * (botón X, tocar el fondo, o navegar). Nunca deja a la usuaria atrapada.
  */
-export function MobileNav() {
+export function MobileNav({ rol }: { rol: string }) {
   const [open, setOpen] = useState(false);
 
   // Bloquea el scroll del fondo mientras el drawer está abierto.
@@ -75,7 +75,7 @@ export function MobileNav() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <NavLinks onNavigate={() => setOpen(false)} />
+                <NavLinks rol={rol} onNavigate={() => setOpen(false)} />
               </div>
             </motion.aside>
           </>

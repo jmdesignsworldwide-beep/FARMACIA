@@ -4,6 +4,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { VentasNav } from "@/components/ventas/ventas-nav";
 import { getVentas, metodoLabel } from "@/lib/data/ventas";
+import { requireCapability } from "@/lib/auth/guard";
 import { formatRD } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,11 @@ export default async function HistorialPage({
 }: {
   searchParams: { q?: string };
 }) {
+  const emp = await requireCapability("usar_pos");
+  // El cajero solo ve sus propias ventas.
+  const soloMias = emp.rol === "cajero" ? emp.id : undefined;
   const q = searchParams.q?.trim();
-  const ventas = await getVentas(q);
+  const ventas = await getVentas(q, soloMias);
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { ProductoForm } from "@/components/inventario/producto-form";
 import { getProductoDetalle } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 import { actualizarProducto } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function EditarProductoPage({
 }: {
   params: { id: string };
 }) {
+  await requireCapability("editar_inventario");
   const detalle = await getProductoDetalle(params.id);
   if (!detalle) notFound();
   const { producto } = detalle;

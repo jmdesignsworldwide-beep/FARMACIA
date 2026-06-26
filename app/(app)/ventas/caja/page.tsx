@@ -2,10 +2,12 @@ import { Reveal } from "@/components/motion/reveal";
 import { VentasNav } from "@/components/ventas/ventas-nav";
 import { CajaPanel } from "@/components/ventas/caja-panel";
 import { getCajaActual, getCajaResumen, getEgresos } from "@/lib/data/ventas";
+import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function CajaPage() {
+  await requireCapability("usar_caja");
   const caja = await getCajaActual();
   const [resumen, egresos] = caja
     ? await Promise.all([getCajaResumen(caja), getEgresos(caja.id)])

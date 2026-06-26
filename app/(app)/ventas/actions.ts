@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { checkCapability } from "@/lib/auth/guard";
 import { getVentaDetalle, type VentaItem } from "@/lib/data/ventas";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -54,6 +55,8 @@ export async function registrarVenta(
 ): Promise<VentaResultado> {
   const { supabase, user } = await requireUser();
   if (!user) return { ok: false, error: "Sesión expirada. Vuelve a entrar." };
+  if (!(await checkCapability("usar_pos")).ok)
+    return { ok: false, error: "No tienes permiso para vender." };
 
   if (!payload.items?.length) return { ok: false, error: "El carrito está vacío." };
 
@@ -97,6 +100,7 @@ export async function abrirCaja(
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Sesión expirada." };
+  if (!(await checkCapability("usar_caja")).ok) return { error: "No tienes permiso para operar la caja." };
   const monto = Number(formData.get("monto_inicial"));
   if (!Number.isFinite(monto) || monto < 0)
     return { error: "El monto inicial no es válido." };
@@ -118,6 +122,7 @@ export async function registrarEgreso(
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Sesión expirada." };
+  if (!(await checkCapability("usar_caja")).ok) return { error: "No tienes permiso para operar la caja." };
   const caja_id = String(formData.get("caja_id") ?? "");
   const monto = Number(formData.get("monto"));
   const motivo = String(formData.get("motivo") ?? "").trim();
@@ -142,6 +147,7 @@ export async function cerrarCaja(
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Sesión expirada." };
+  if (!(await checkCapability("usar_caja")).ok) return { error: "No tienes permiso para operar la caja." };
   const contado = Number(formData.get("monto_contado"));
   const notas = String(formData.get("notas") ?? "").trim() || null;
   if (!Number.isFinite(contado) || contado < 0)
@@ -162,6 +168,7 @@ export async function anularVenta(
 ): Promise<FormState> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Sesión expirada." };
+  if (!(await checkCapability("ver_ventas_todas")).ok) return { error: "No tienes permiso para anular ventas." };
   const venta_id = String(formData.get("venta_id") ?? "");
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!venta_id) return { error: "Venta no válida." };

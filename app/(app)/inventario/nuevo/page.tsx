@@ -2,11 +2,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { ProductoForm } from "@/components/inventario/producto-form";
+import { requireCapability } from "@/lib/auth/guard";
 import { crearProducto } from "../actions";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Nuevo producto — JM Farmacia" };
 
-export default function NuevoProductoPage() {
+export default async function NuevoProductoPage() {
+  await requireCapability("editar_inventario");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Reveal>

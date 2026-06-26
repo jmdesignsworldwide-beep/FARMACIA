@@ -3,6 +3,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { InventarioNav } from "@/components/inventario/inventario-nav";
 import { getMovimientos } from "@/lib/data/inventory";
+import { requireCapability } from "@/lib/auth/guard";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ const META = {
 } as const;
 
 export default async function MovimientosPage() {
+  await requireCapability("ver_inventario");
   const movimientos = await getMovimientos(60);
 
   return (

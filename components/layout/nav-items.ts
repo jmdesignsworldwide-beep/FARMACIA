@@ -2,27 +2,30 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
-  Truck,
   Users,
+  History,
   BarChart3,
   Settings,
+  Bike,
   type LucideIcon,
 } from "lucide-react";
+import type { Capacidad } from "@/lib/auth/roles";
 
 export type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
-  /** Indica módulos que llegan en tandas futuras (placeholder limpio). */
+  cap: Capacidad;
   soon?: boolean;
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Panel", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Inventario", href: "/inventario", icon: Package, soon: true },
-  { label: "Ventas", href: "/ventas", icon: ShoppingCart, soon: true },
-  { label: "Compras", href: "/compras", icon: Truck, soon: true },
-  { label: "Clientes", href: "/clientes", icon: Users, soon: true },
-  { label: "Reportes", href: "/reportes", icon: BarChart3, soon: true },
-  { label: "Configuración", href: "/configuracion", icon: Settings, soon: true },
+  { label: "Panel", href: "/dashboard", icon: LayoutDashboard, cap: "ver_dashboard" },
+  { label: "Punto de venta", href: "/ventas", icon: ShoppingCart, cap: "usar_pos" },
+  { label: "Inventario", href: "/inventario", icon: Package, cap: "ver_inventario" },
+  { label: "Empleados", href: "/empleados", icon: Users, cap: "ver_empleados" },
+  { label: "Historial", href: "/actividad", icon: History, cap: "ver_historial" },
+  { label: "Mis entregas", href: "/entregas", icon: Bike, cap: "ver_entregas" },
+  { label: "Reportes", href: "/reportes", icon: BarChart3, cap: "ver_reportes", soon: true },
+  { label: "Configuración", href: "/configuracion", icon: Settings, cap: "gestionar_empleados", soon: true },
 ];
