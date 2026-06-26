@@ -9,8 +9,9 @@ import {
 } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { CountUp } from "@/components/motion/count-up";
+import { PulseDot } from "@/components/motion/pulse-dot";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
 import { ControladoBadge, RecetaBadge } from "@/components/inventario/badges";
 import { ControladoModal, type RecetaDatos } from "./controlado-modal";
 import { RecetaModal } from "./receta-modal";
@@ -19,6 +20,7 @@ import { registrarVenta } from "@/app/(app)/ventas/actions";
 import { METODOS_PAGO } from "@/lib/data/ventas-shared";
 import { formatRD, cn } from "@/lib/utils";
 import type { ProductoVendible, LoteVendible } from "@/lib/data/ventas-shared";
+import type { ClienteBasico } from "@/lib/data/clientes-shared";
 
 type CartLine = { producto: ProductoVendible; cantidad: number };
 
@@ -47,13 +49,16 @@ const metodoIcon: Record<string, typeof Banknote> = {
 
 export function POS({
   productos,
+  clientes,
   cajaAbierta,
 }: {
   productos: ProductoVendible[];
+  clientes: ClienteBasico[];
   cajaAbierta: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [clienteId, setClienteId] = useState("");
   const [descuento, setDescuento] = useState(0);
   const [metodo, setMetodo] = useState<string>("efectivo");
   const [recibido, setRecibido] = useState<number>(0);
@@ -78,6 +83,7 @@ export function POS({
       .slice(0, 24);
   }, [productos, query]);
 
+  const cliente = clientes.find((c) => c.id === clienteId) ?? null;
   const subtotal = cart.reduce((s, l) => s + l.producto.precio_venta * l.cantidad, 0);
   const total = Math.max(subtotal - descuento, 0);
   const cambio = metodo === "efectivo" ? Math.max(recibido - total, 0) : 0;
@@ -119,6 +125,7 @@ export function POS({
     setRecibido(0);
     setVoucher("");
     setReceta(null);
+    setClienteId("");
   }
 
   const puedeCobrar =
@@ -143,6 +150,8 @@ export function POS({
         montoRecibido: metodo === "efectivo" ? recibido : null,
         voucher: metodo === "transferencia" ? voucher.trim() : null,
         receta: receta ?? null,
+        clienteId: clienteId || null,
+        clienteNombre: cliente?.nombre ?? null,
       });
       if (!res.ok) {
         setError(res.error ?? "No se pudo completar la venta.");
@@ -236,6 +245,22 @@ export function POS({
               <Info className="h-4 w-4 shrink-0" /> No hay caja abierta — ábrela para cobrar.
             </Link>
           )}
+
+          {/* Cliente (opcional) */}
+          <div className="mt-3">
+            <Select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className="h-10 py-2 text-sm">
+              <option value="">Cliente: sin asociar</option>
+              {clientes.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}{c.cedula ? ` · ${c.cedula}` : ""}</option>
+              ))}
+            </Select>
+            {cliente && cliente.alergias.length > 0 && (
+              <div className="mt-2 flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-medium text-danger">
+                <PulseDot tone="danger" />
+                <span>Alergias: {cliente.alergias.join(", ")}</span>
+              </div>
+            )}
+          </div>
 
           <div className="mt-3 flex-1 space-y-2 overflow-y-auto">
             <AnimatePresence initial={false}>
