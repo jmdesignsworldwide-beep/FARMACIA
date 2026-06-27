@@ -55,12 +55,16 @@ export default async function DashboardPage() {
         </Reveal>
       </div>
 
-      <Reveal>
-        <p className="text-center text-xs text-muted-foreground">
-          Datos de muestra · al activar POS e Inventario, el panel leerá de la
-          fuente real automáticamente.
-        </p>
-      </Reveal>
+      {data.esDemo && (
+        <Reveal>
+          <p className="text-center text-xs text-muted-foreground">
+            Las ventas y la caja del día se muestran con datos de muestra de un día
+            activo; al registrar ventas reales, el panel las reemplaza
+            automáticamente. <span className="text-success">Bajo stock</span> y{" "}
+            <span className="text-success">por vencer</span> ya leen de tu inventario real.
+          </p>
+        </Reveal>
+      )}
     </div>
   );
 }

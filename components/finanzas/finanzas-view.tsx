@@ -16,6 +16,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { FitText } from "@/components/ui/fit-text";
 import { IngresosEgresosChart, ComposicionChart } from "./charts";
 import { useChartColors } from "@/components/reportes/use-chart-colors";
 import { formatRD, cn } from "@/lib/utils";
@@ -96,9 +97,9 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
                     {sube ? "+" : ""}{data.tendenciaPct}%
                   </span>
                 </div>
-                <p className="tabular mt-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
+                <FitText className="mt-3" textClassName="tabular bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
                   <CountUp value={data.ganancia} currency />
-                </p>
+                </FitText>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Ventas menos el costo de lo vendido · margen {data.margenPct}%
                 </p>
@@ -306,7 +307,7 @@ function FotoCard({ tone, icon: Icon, label, sub, value, onClick }: {
             <Icon className="h-5 w-5" />
           </span>
         </div>
-        <p className="tabular mt-3 text-3xl font-semibold tracking-tight"><CountUp value={value} currency /></p>
+        <FitText className="mt-3" textClassName="tabular text-3xl font-semibold tracking-tight"><CountUp value={value} currency /></FitText>
         <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
           Ver detalle <ChevronRight className="h-3.5 w-3.5" />
         </span>
@@ -327,7 +328,7 @@ function PatrimonioCard({ icon: Icon, tone, label, value, hint }: {
             <p className="text-xs font-medium text-muted-foreground">{label}</p>
             <span className={cn("grid h-8 w-8 place-items-center rounded-lg", toneCls)}><Icon className="h-4 w-4" /></span>
           </div>
-          <p className="tabular mt-2 text-2xl font-semibold tracking-tight"><CountUp value={value} currency /></p>
+          <FitText className="mt-2" textClassName="tabular text-2xl font-semibold tracking-tight"><CountUp value={value} currency /></FitText>
           <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">{hint}</p>
         </Card>
       </Magnetic>
@@ -365,10 +366,10 @@ function PanelHeader({ icon: Icon, tone, titulo, monto }: {
   const toneCls = tone === "success" ? "bg-success/12 text-success" : tone === "danger" ? "bg-danger/12 text-danger" : "bg-primary/12 text-primary";
   return (
     <div className="flex items-center gap-3">
-      <span className={cn("grid h-11 w-11 place-items-center rounded-2xl", toneCls)}><Icon className="h-5 w-5" /></span>
-      <div>
+      <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-2xl", toneCls)}><Icon className="h-5 w-5" /></span>
+      <div className="min-w-0 flex-1">
         <h2 className="text-base font-semibold tracking-tight">{titulo}</h2>
-        <p className="tabular text-2xl font-bold tracking-tight"><CountUp value={monto} currency /></p>
+        <FitText textClassName="tabular text-2xl font-bold tracking-tight"><CountUp value={monto} currency /></FitText>
       </div>
     </div>
   );

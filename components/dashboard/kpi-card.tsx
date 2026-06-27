@@ -6,6 +6,7 @@ import { ArrowUpRight, Check, type LucideIcon } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { CountUp } from "@/components/motion/count-up";
 import { PulseDot } from "@/components/motion/pulse-dot";
+import { FitText } from "@/components/ui/fit-text";
 import { cn } from "@/lib/utils";
 
 type Variant = "positive" | "alert";
@@ -87,9 +88,9 @@ export function KpiCard({
             </span>
           </div>
 
-          <p className="tabular relative mt-3 text-[2.1rem] font-semibold leading-none tracking-tight sm:text-4xl">
+          <FitText className="relative mt-3" textClassName="tabular text-[2.1rem] font-semibold leading-none tracking-tight sm:text-4xl">
             <CountUp value={value} currency={currency} />
-          </p>
+          </FitText>
 
           <div className="relative mt-3 flex min-h-[1.25rem] items-center gap-1.5 text-xs">
             {tense ? (
