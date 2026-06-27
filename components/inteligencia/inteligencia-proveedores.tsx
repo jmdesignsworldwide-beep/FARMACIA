@@ -1,4 +1,5 @@
-import { Sparkles, Truck, TrendingUp, BadgeCheck, CalendarClock, Package } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Truck, TrendingUp, BadgeCheck, CalendarClock, Package, ChevronRight } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { FillBar } from "@/components/motion/fill-bar";
 import { AvisarProveedor } from "./avisar-proveedor";
@@ -77,15 +78,28 @@ export function InteligenciaProveedores({ data, farmacia }: { data: Inteligencia
             <p className="text-sm text-muted-foreground">Registra proveedores para comparar.</p>
           ) : (
             <ul className="space-y-2">
-              {data.comparador.map((c) => (
-                <li key={c.proveedorId ?? c.nombre} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${c.recomendado ? "border-success/40 bg-success/10" : "border-border/60 bg-card/40"}`}>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 text-sm font-medium">{c.nombre}{c.recomendado && <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-success"><BadgeCheck className="h-3 w-3" /> Más conveniente</span>}</p>
-                    <p className="text-xs text-muted-foreground">{c.veces} {c.veces === 1 ? "vez" : "veces"} surtido</p>
-                  </div>
-                  <span className="tabular text-sm font-semibold">{formatRD(c.precio)}</span>
-                </li>
-              ))}
+              {data.comparador.map((c) => {
+                const inner = (
+                  <>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1.5 text-sm font-medium">{c.nombre}{c.recomendado && <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-success"><BadgeCheck className="h-3 w-3" /> Más conveniente</span>}</p>
+                      <p className="text-xs text-muted-foreground">{c.veces} {c.veces === 1 ? "vez" : "veces"} surtido</p>
+                    </div>
+                    <span className="tabular text-sm font-semibold">{formatRD(c.precio)}</span>
+                    {c.proveedorId && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />}
+                  </>
+                );
+                const cls = `flex items-center gap-3 rounded-xl border px-3 py-2.5 ${c.recomendado ? "border-success/40 bg-success/10" : "border-border/60 bg-card/40"}`;
+                return (
+                  <li key={c.proveedorId ?? c.nombre}>
+                    {c.proveedorId ? (
+                      <Link href={`/proveedores/${c.proveedorId}`} className={`group ${cls} transition-colors hover:bg-muted`}>{inner}</Link>
+                    ) : (
+                      <div className={cls}>{inner}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           <p className="mt-3 text-[11px] text-muted-foreground">Frecuencia real; precio de referencia por proveedor.</p>

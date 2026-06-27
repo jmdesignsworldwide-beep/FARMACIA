@@ -28,13 +28,13 @@ function SaveBtn({ label = "Guardar" }: { label?: string }) {
   );
 }
 
-function Ok({ show }: { show?: boolean }) {
+function Ok({ show, label = "Guardado" }: { show?: boolean; label?: string }) {
   return (
     <AnimatePresence>
       {show && (
         <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
           className="inline-flex items-center gap-1 text-sm font-medium text-success">
-          <Check className="h-4 w-4" /> Guardado
+          <Check className="h-4 w-4" /> {label}
         </motion.span>
       )}
     </AnimatePresence>
@@ -169,8 +169,27 @@ function Metodos({ config }: { config: Config }) {
   );
 }
 
+/** Botón de guardado para las secciones NAVEGABLES (responde con feedback claro). */
+function GuardarDemo({ label = "Guardar" }: { label?: string }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <div className="mt-3 flex items-center justify-end gap-3">
+      <Ok show={ok} />
+      <Button type="button" variant="outline" size="sm" onClick={() => { setOk(true); window.setTimeout(() => setOk(false), 2500); }}>
+        <Save className="h-4 w-4" /> {label}
+      </Button>
+    </div>
+  );
+}
+
 function Navegable() {
   const [respaldo, setRespaldo] = useState(false);
+  const [sesiones, setSesiones] = useState([
+    { id: "tablet", nombre: "Tablet del mostrador", detalle: "Santiago · hace 2 h" },
+    { id: "movil", nombre: "Celular (Android)", detalle: "Santo Domingo · ayer" },
+  ]);
+  const [cerrada, setCerrada] = useState(false);
+
   return (
     <>
       <Section icon={FileText} title="Facturación NCF" desc="Comprobantes fiscales (DGII).">
@@ -179,11 +198,13 @@ function Navegable() {
           <Field label="Secuencia B01 (crédito fiscal)"><Input defaultValue="B0100000001 – B0100001000" /></Field>
           <Field label="Secuencia B02 (consumo)"><Input defaultValue="B0200000001 – B0200005000" /></Field>
         </div>
+        <GuardarDemo label="Guardar secuencias" />
       </Section>
 
       <Section icon={ShieldCheck} title="Facturación Electrónica (e-CF)" desc="Comprobante fiscal electrónico.">
         <Disclaimer>Facturación electrónica de demostración. No certificada ante la DGII.</Disclaimer>
         <div className="mt-3"><Toggle name="ecf" label="Emitir e-CF en cada venta" description="Demostración" /></div>
+        <GuardarDemo />
       </Section>
 
       <Section icon={Printer} title="Impresora de recibos" desc="Configuración de impresión.">
@@ -200,6 +221,7 @@ function Navegable() {
           </Field>
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">Configuración de demostración.</p>
+        <GuardarDemo label="Guardar impresora" />
       </Section>
 
       <Section icon={CloudUpload} title="Respaldo en la nube" desc="Copia de seguridad de tus datos.">
@@ -221,15 +243,24 @@ function Navegable() {
             <div className="min-w-0 flex-1"><p className="text-sm font-medium">Este dispositivo</p><p className="text-xs text-muted-foreground">Navegador · activo ahora</p></div>
             <span className="text-[11px] font-medium text-success">Actual</span>
           </li>
-          <li className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 px-3 py-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
-            <div className="min-w-0 flex-1"><p className="text-sm font-medium">Tablet del mostrador</p><p className="text-xs text-muted-foreground">Santiago · hace 2 h</p></div>
-            <span className="text-[11px] text-muted-foreground">Demostración</span>
-          </li>
+          {sesiones.map((s) => (
+            <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 px-3 py-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
+              <div className="min-w-0 flex-1"><p className="text-sm font-medium">{s.nombre}</p><p className="text-xs text-muted-foreground">{s.detalle}</p></div>
+              <Button type="button" variant="ghost" size="sm" className="text-muted-foreground hover:bg-danger/10 hover:text-danger"
+                onClick={() => { setSesiones((prev) => prev.filter((x) => x.id !== s.id)); setCerrada(true); window.setTimeout(() => setCerrada(false), 2500); }}>
+                <LogOut className="h-4 w-4" /> Cerrar
+              </Button>
+            </li>
+          ))}
         </ul>
-        <form action={signOut} className="mt-3 flex justify-end">
-          <Button type="submit" variant="outline" size="sm" className="text-danger"><LogOut className="h-4 w-4" /> Cerrar mi sesión</Button>
-        </form>
+        {sesiones.length === 0 && <p className="mt-2 text-xs text-muted-foreground">No hay otros dispositivos con sesión abierta.</p>}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <Ok show={cerrada} label="Sesión cerrada" />
+          <form action={signOut} className="ml-auto">
+            <Button type="submit" variant="outline" size="sm" className="text-danger"><LogOut className="h-4 w-4" /> Cerrar mi sesión</Button>
+          </form>
+        </div>
       </Section>
     </>
   );

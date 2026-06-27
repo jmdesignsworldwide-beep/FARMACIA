@@ -66,6 +66,7 @@ export async function getOrdenesSugeridas(): Promise<OrdenSugerida[]> {
 
 export type ComparacionFila = {
   producto: string;
+  productoId: string;
   precios: { proveedor: string; precio: number }[];
   mejor: string;
 };
@@ -82,6 +83,6 @@ export async function getComparacionPrecios(): Promise<ComparacionFila[]> {
       precio: Math.round(p.precio_costo * factores[(i + idx) % 3] * 100) / 100,
     }));
     const mejor = precios.reduce((a, b) => (b.precio < a.precio ? b : a)).proveedor;
-    return { producto: p.nombre_comercial, precios, mejor };
+    return { producto: p.nombre_comercial, productoId: p.id, precios, mejor };
   });
 }
