@@ -28,6 +28,7 @@ export type AttentionItem = {
 };
 
 export type DashboardData = {
+  esDemo: boolean; // true si el flujo del día (ventas/caja) viene de muestra
   salesToday: { amount: number; transactions: number };
   cashOnHand: { amount: number };
   expiring: { within30: number; within60: number; within90: number };
@@ -38,6 +39,18 @@ export type DashboardData = {
     topProduct: { name: string; units: number };
     ticketAverage: number;
   };
+};
+
+// Muestra creíble de un día activo (mismo criterio híbrido que Finanzas y
+// Reportes): el panel se ve VIVO sin ventas reales, y al operar lee lo real.
+const DEMO_DIA = {
+  salesToday: { amount: 48600, transactions: 37 },
+  cashOnHand: { amount: 32450 },
+  daySummary: {
+    topPaymentMethod: { label: "Efectivo", pct: 56 },
+    topProduct: { name: "Acetaminofén 500 mg", units: 24 },
+    ticketAverage: Math.round(48600 / 37),
+  },
 };
 
 function buildAttention(
@@ -101,16 +114,23 @@ export async function getDashboardData(): Promise<DashboardData> {
     ? { label: metodoLabel(topPago[0]), pct: Math.round((topPago[1] / ventasHoy.total) * 100) }
     : { label: "—", pct: 0 };
 
+  // Híbrido: sin ventas reales hoy, el flujo del día usa muestra creíble
+  // (el inventario —bajo stock / por vencer— SIEMPRE es real).
+  const esDemo = ventasHoy.count === 0;
+
   return {
-    salesToday: { amount: ventasHoy.total, transactions: ventasHoy.count },
-    cashOnHand: { amount: cashOnHand },
-    daySummary: {
-      topPaymentMethod,
-      topProduct: ventasHoy.topProducto
-        ? { name: ventasHoy.topProducto.nombre, units: ventasHoy.topProducto.unidades }
-        : { name: "—", units: 0 },
-      ticketAverage: ventasHoy.ticketPromedio,
-    },
+    esDemo,
+    salesToday: esDemo ? DEMO_DIA.salesToday : { amount: ventasHoy.total, transactions: ventasHoy.count },
+    cashOnHand: esDemo ? DEMO_DIA.cashOnHand : { amount: cashOnHand },
+    daySummary: esDemo
+      ? DEMO_DIA.daySummary
+      : {
+          topPaymentMethod,
+          topProduct: ventasHoy.topProducto
+            ? { name: ventasHoy.topProducto.nombre, units: ventasHoy.topProducto.unidades }
+            : { name: "—", units: 0 },
+          ticketAverage: ventasHoy.ticketPromedio,
+        },
     expiring: { within30, within60, within90 },
     lowStock: { count: bajoStock.length },
     attention: buildAttention(lotes, bajoStock, ventana),

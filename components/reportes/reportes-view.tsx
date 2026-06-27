@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { VencimientoBadge } from "@/components/inventario/badges";
 import {
-  VentasTiempoChart, MasVendidosChart, MetodosChart, EmpleadosChart, IngresosGastosChart,
+  VentasTiempoChart, MasVendidosChart, MetodosChart, EmpleadosChart,
 } from "./charts";
 import { useChartColors } from "./use-chart-colors";
 import { formatRD, cn } from "@/lib/utils";
@@ -95,8 +95,9 @@ export function ReportesView({ data }: { data: ReportesData }) {
         </Reveal>
         <Reveal delay={0.05}>
           <Card className="h-full">
-            <h2 className="mb-3 text-base font-semibold tracking-tight">Por método de pago</h2>
-            <MetodosChart data={data.porMetodo} onSelect={(m: MetodoSlice) => setDesglose({ titulo: m.metodo, detalle: `${m.valor}% de las ventas del período.` })} />
+            <h2 className="text-base font-semibold tracking-tight">Preferencia de pago</h2>
+            <p className="mb-3 text-xs text-muted-foreground">Cómo prefieren pagar tus clientes.</p>
+            <MetodosChart data={data.porMetodo} onSelect={(m: MetodoSlice) => setDesglose({ titulo: m.metodo, detalle: `${m.valor}% de las transacciones del período se pagaron con ${m.metodo.toLowerCase()}.` })} />
             <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
               {data.porMetodo.map((m, i) => (
                 <span key={m.metodo} className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -107,16 +108,11 @@ export function ReportesView({ data }: { data: ReportesData }) {
             </div>
           </Card>
         </Reveal>
-        <Reveal>
+        <Reveal className="lg:col-span-2">
           <Card className="h-full">
-            <h2 className="mb-3 text-base font-semibold tracking-tight">Ventas por empleado</h2>
+            <h2 className="text-base font-semibold tracking-tight">Ventas por empleado</h2>
+            <p className="mb-3 text-xs text-muted-foreground">Quién está vendiendo más en el período.</p>
             <EmpleadosChart data={porEmpleado} />
-          </Card>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <Card className="h-full">
-            <h2 className="mb-3 text-base font-semibold tracking-tight">Ingresos vs gastos</h2>
-            <IngresosGastosChart data={data.ingresosGastos} />
           </Card>
         </Reveal>
       </div>

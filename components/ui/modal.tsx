@@ -56,7 +56,7 @@ export function Modal({
             role="dialog"
             aria-modal="true"
             className={cn(
-              "glass-strong relative z-10 w-full max-w-lg rounded-3xl p-6 shadow-elev-3",
+              "glass-strong relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl p-6 shadow-elev-3",
               className,
             )}
             initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 12 }}
