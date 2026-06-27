@@ -11,6 +11,7 @@ import {
   getCajaResumen,
   metodoLabel,
 } from "./ventas";
+import { getConfig } from "./config";
 
 /**
  * Fuente del dashboard. Todo REAL desde la Tanda 4: ventas y caja leen
@@ -42,9 +43,10 @@ export type DashboardData = {
 function buildAttention(
   lotes: LoteConProducto[],
   bajoStock: ProductoConStock[],
+  ventana: number,
 ): AttentionItem[] {
   const fromExpiry: AttentionItem[] = lotes
-    .filter((l) => l.dias_para_vencer <= 30)
+    .filter((l) => l.dias_para_vencer <= ventana)
     .map((l) => ({
       id: `exp-${l.id}`,
       kind: "expiry" as const,
@@ -71,15 +73,20 @@ function buildAttention(
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const [productos, lotes, ventasHoy, caja] = await Promise.all([
+  const [productos, lotes, ventasHoy, caja, config] = await Promise.all([
     getProductos(),
     getLotesPorVencer(90),
     getVentasHoy(),
     getCajaActual(),
+    getConfig(),
   ]);
 
-  const bajoStock = productos.filter((p) => p.bajo_stock);
-  const within30 = lotes.filter((l) => l.dias_para_vencer <= 30).length;
+  // El sistema obedece la configuración: umbral de stock y ventana de vencimiento.
+  const bajoStock = productos.filter(
+    (p) => p.stock_total <= Math.max(p.stock_minimo, config.stock_minimo_default),
+  );
+  const ventana = config.dias_alerta_vencimiento;
+  const within30 = lotes.filter((l) => l.dias_para_vencer <= ventana).length;
   const within60 = lotes.filter((l) => l.dias_para_vencer <= 60).length;
   const within90 = lotes.length;
 
@@ -106,6 +113,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     expiring: { within30, within60, within90 },
     lowStock: { count: bajoStock.length },
-    attention: buildAttention(lotes, bajoStock),
+    attention: buildAttention(lotes, bajoStock, ventana),
   };
 }

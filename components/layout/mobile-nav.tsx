@@ -14,7 +14,7 @@ import { NavLinks } from "./nav-links";
  * de los hijos `position: fixed`, lo que limitaba el panel al alto del header.
  * Siempre se puede cerrar (X, fondo, Escape, o al navegar).
  */
-export function MobileNav({ rol }: { rol: string }) {
+export function MobileNav({ rol, nombre }: { rol: string; nombre?: string }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -64,7 +64,7 @@ export function MobileNav({ rol }: { rol: string }) {
             aria-label="Menú de navegación"
           >
             <div className="flex shrink-0 items-center justify-between px-2">
-              <Brand />
+              <Brand name={nombre} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

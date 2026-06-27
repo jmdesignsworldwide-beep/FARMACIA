@@ -50,7 +50,7 @@ export default async function InventarioPage({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard icon={Boxes} label="Productos activos" value={stats.totalProductos} href="/inventario" tone="primary" />
         <StatCard icon={AlertTriangle} label="Bajo stock" value={stats.bajoStock.length} href="/inventario?bajo=1" tone="warning" alert={stats.bajoStock.length > 0} />
-        <StatCard icon={CalendarClock} label="Por vencer (30d)" value={stats.porVencer30} href="/inventario/alertas" tone="warning" alert={stats.porVencer30 > 0} />
+        <StatCard icon={CalendarClock} label={`Por vencer (${stats.ventanaAlerta}d)`} value={stats.porVencerAlerta} href="/inventario/alertas" tone="warning" alert={stats.porVencerAlerta > 0} />
       </div>
 
       <Reveal>
