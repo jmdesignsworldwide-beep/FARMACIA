@@ -8,8 +8,9 @@ import { crearProducto } from "../actions";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Nuevo producto — JM Farmacia" };
 
-export default async function NuevoProductoPage() {
+export default async function NuevoProductoPage({ searchParams }: { searchParams: { codigo?: string } }) {
   await requireCapability("editar_inventario");
+  const codigo = searchParams.codigo?.trim();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Reveal>
@@ -23,7 +24,7 @@ export default async function NuevoProductoPage() {
       </Reveal>
 
       <Reveal delay={0.05}>
-        <ProductoForm action={crearProducto} submitLabel="Crear producto" />
+        <ProductoForm action={crearProducto} defaultCodigo={codigo} submitLabel="Crear producto" />
       </Reveal>
     </div>
   );

@@ -13,6 +13,7 @@ import { PulseDot } from "@/components/motion/pulse-dot";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { ControladoBadge, RecetaBadge } from "@/components/inventario/badges";
+import { ScanButton } from "@/components/scanner/scan-button";
 import { ControladoModal, type RecetaDatos } from "./controlado-modal";
 import { RecetaModal } from "./receta-modal";
 import { Receipt, type ReciboData } from "./receipt";
@@ -172,20 +173,23 @@ export function POS({
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
       {/* Buscador + productos */}
       <div className="space-y-4 lg:col-span-3">
-        <div className="flex items-center gap-2.5 rounded-xl border border-input bg-card/50 px-3.5 py-3 shadow-elev-1 focus-within:border-ring focus-within:shadow-glow">
-          <ScanLine className="h-5 w-5 text-primary" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Escanea o busca por nombre, genérico o código de barras…"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-            autoFocus
-          />
-          {query ? (
-            <button onClick={() => setQuery("")} aria-label="Limpiar"><X className="h-4 w-4 text-muted-foreground" /></button>
-          ) : (
-            <Search className="h-4 w-4 text-muted-foreground" />
-          )}
+        <div className="flex gap-2">
+          <div className="flex flex-1 items-center gap-2.5 rounded-xl border border-input bg-card/50 px-3.5 py-3 shadow-elev-1 focus-within:border-ring focus-within:shadow-glow">
+            <ScanLine className="h-5 w-5 text-primary" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Escanea o busca por nombre, genérico o código…"
+              className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+              autoFocus
+            />
+            {query ? (
+              <button onClick={() => setQuery("")} aria-label="Limpiar"><X className="h-4 w-4 text-muted-foreground" /></button>
+            ) : (
+              <Search className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          <ScanButton onDetected={(c) => setQuery(c)} label="" />
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

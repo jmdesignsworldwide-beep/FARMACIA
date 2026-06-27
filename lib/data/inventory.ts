@@ -114,13 +114,13 @@ export async function getProductoDetalle(id: string): Promise<{
 
 /** Lista corta para selectores (entrada de mercancía). */
 export async function getProductosBasico(): Promise<
-  Pick<Producto, "id" | "nombre_comercial" | "nombre_generico" | "presentacion">[]
+  Pick<Producto, "id" | "nombre_comercial" | "nombre_generico" | "presentacion" | "codigo_barras">[]
 > {
   if (!isSupabaseConfigured()) return [];
   const supabase = createClient();
   const { data } = await supabase
     .from("productos")
-    .select("id, nombre_comercial, nombre_generico, presentacion")
+    .select("id, nombre_comercial, nombre_generico, presentacion, codigo_barras")
     .eq("activo", true)
     .order("nombre_comercial");
   return data ?? [];
