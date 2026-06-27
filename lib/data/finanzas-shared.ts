@@ -18,6 +18,12 @@ export type ProductoRent = {
 export type VentaLinea = { id: string; folio: number; total: number; metodo: string; created_at: string };
 export type GastoLinea = { motivo: string; monto: number; created_at: string };
 
+/** Tendencia de un número clave vs el período anterior. `mejor` = el cambio es bueno. */
+export type Tendencia = { pct: number; mejor: boolean };
+export type Tendencias = { entro: Tendencia; salio: Tendencia; ganancia: Tendencia; margen: Tendencia };
+export type Proyeccion = { ventas: number; ganancia: number; pctMes: number };
+export type Insights = { patrimonio: string; rentable: string; salidas: string };
+
 export type FinanzasData = {
   periodo: FinanzasPeriodo;
   desde: string;
@@ -55,6 +61,11 @@ export type FinanzasData = {
   serie: SerieFin[]; // ingresos vs egresos en el tiempo
   masRentables: ProductoRent[];
   menosRentables: ProductoRent[];
+
+  // ── Cerebro (upgrade monster) ──
+  tendencias: Tendencias; // ↑↓ % vs período anterior en cada número clave
+  proyeccion: Proyeccion | null; // cierre de mes estimado al ritmo actual
+  insights: Insights; // frases en cristiano generadas de los datos
 };
 
 export const PERIODOS: { value: FinanzasPeriodo; label: string }[] = [
@@ -121,6 +132,21 @@ export function muestraFlujo(periodo: Exclude<FinanzasPeriodo, "custom">) {
   }));
 
   const gananciaPrev = Math.round(ganancia / 1.12); // +12% vs período anterior
+
+  // Tendencias creíbles de muestra (mejora general, gasto controlado).
+  const tendencias: Tendencias = {
+    entro: { pct: 9, mejor: true },
+    salio: { pct: 4, mejor: true }, // sube poco: la proporción de gasto mejora
+    ganancia: { pct: 12, mejor: true },
+    margen: { pct: 2, mejor: true },
+  };
+  // Proyección de cierre de mes (a este ritmo) — estimada.
+  const proyeccion: Proyeccion = {
+    ventas: Math.round(1316000 * 1.08),
+    ganancia: Math.round(1316000 * 1.08 * 0.34),
+    pctMes: 62,
+  };
+
   return {
     entro,
     salio,
@@ -136,6 +162,8 @@ export function muestraFlujo(periodo: Exclude<FinanzasPeriodo, "custom">) {
     gastos,
     totalGastos,
     serie: serieMuestra(periodo),
+    tendencias,
+    proyeccion,
   };
 }
 

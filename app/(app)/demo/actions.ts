@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { isAdminDemo, getDemoAcceso } from "@/lib/data/demo-acceso";
@@ -124,6 +125,82 @@ export async function renovarCuentaDemo(id: string, dias: number): Promise<FormS
     { usuario: acceso.username, dias, vence_at: venceAt }, acceso.user_id);
 
   revalidatePath("/demo");
+  return { ok: true };
+}
+
+/**
+ * Cambia el USUARIO y/o la CONTRASEÑA de la cuenta admin del demo (real).
+ * Anti-escalada: solo el admin del demo, validado en el servidor. Pide la
+ * contraseña actual como confirmación. La nueva se guarda hasheada (Supabase Auth).
+ */
+export async function actualizarCredencialesAdmin(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!(await isAdminDemo())) return { error: "Solo el administrador del demo puede cambiar estas credenciales." };
+  if (!isAdminConfigured()) return { error: "Falta configurar la llave de servidor (SUPABASE_SERVICE_ROLE_KEY) en Vercel." };
+
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "Sesión expirada. Vuelve a entrar." };
+
+  const actual = String(formData.get("actual") ?? "");
+  const nuevoUsuario = String(formData.get("nuevo_usuario") ?? "").trim().toLowerCase();
+  const nuevaPass = String(formData.get("nueva_password") ?? "");
+  const confirmar = String(formData.get("confirmar") ?? "");
+
+  const cambiaUsuario = nuevoUsuario.length > 0;
+  const cambiaPass = nuevaPass.length > 0;
+  if (!cambiaUsuario && !cambiaPass) return { error: "No indicaste ningún cambio." };
+  if (!actual) return { error: "Escribe tu contraseña actual para confirmar." };
+
+  // Verifica la contraseña actual con un cliente efímero (no toca la sesión activa).
+  const verif = createAnonClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { error: verr } = await verif.auth.signInWithPassword({ email: user.email, password: actual });
+  if (verr) return { error: "La contraseña actual no es correcta." };
+
+  if (cambiaUsuario && !/^[a-z0-9._-]{3,}$/.test(nuevoUsuario))
+    return { error: "Usuario inválido (mínimo 3, solo letras, números, . _ -)." };
+  if (cambiaPass) {
+    if (nuevaPass.length < 6) return { error: "La contraseña nueva debe tener al menos 6 caracteres." };
+    if (nuevaPass !== confirmar) return { error: "La contraseña nueva y su confirmación no coinciden." };
+  }
+
+  const admin = createAdminClient();
+  const updates: { email?: string; password?: string; email_confirm?: boolean; user_metadata?: Record<string, unknown> } = {};
+
+  if (cambiaUsuario) {
+    // Anti-duplicado: ¿ya existe otra cuenta con ese usuario?
+    const { data: existing } = await admin.from("profiles").select("id").eq("username", nuevoUsuario).maybeSingle();
+    if (existing && existing.id !== user.id) return { error: "Ya existe una cuenta con ese usuario." };
+    updates.email = usernameToEmail(nuevoUsuario);
+    updates.email_confirm = true;
+    updates.user_metadata = { username: nuevoUsuario };
+  }
+  if (cambiaPass) updates.password = nuevaPass;
+
+  const { error: upErr } = await admin.auth.admin.updateUserById(user.id, updates);
+  if (upErr) {
+    if (/already|registered|exists/i.test(upErr.message ?? "")) return { error: "Ya existe una cuenta con ese usuario." };
+    return { error: "No se pudo actualizar las credenciales." };
+  }
+
+  if (cambiaUsuario) {
+    // La auth no dispara triggers en update: refleja el usuario en profiles y demo_accesos.
+    await admin.from("profiles").update({ username: nuevoUsuario }).eq("id", user.id);
+    await admin.from("demo_accesos").update({ username: nuevoUsuario }).eq("user_id", user.id);
+  }
+
+  await logActividad(
+    "admin_credenciales",
+    `Credenciales de admin actualizadas${cambiaUsuario ? ` · usuario → ${nuevoUsuario}` : ""}${cambiaPass ? " · contraseña" : ""}`,
+    { cambia_usuario: cambiaUsuario, cambia_password: cambiaPass },
+    user.id,
+  );
+
+  revalidatePath("/demo");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

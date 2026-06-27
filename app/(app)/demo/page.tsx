@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
-import { ShieldCheck, Users, Sparkles, Info } from "lucide-react";
+import { ShieldCheck, Users, Sparkles, Info, KeyRound } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { Card } from "@/components/ui/card";
 import { CrearCuentaForm } from "@/components/demo/crear-cuenta-form";
 import { CuentasLista } from "@/components/demo/cuentas-lista";
+import { AdminCredencialesForm } from "@/components/demo/admin-credenciales";
 import { isAdminDemo, getDemoAccesos } from "@/lib/data/demo-acceso";
+import { getCurrentEmpleado } from "@/lib/data/empleados";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Acceso de demo — JM Designs" };
@@ -12,7 +14,7 @@ export const metadata = { title: "Acceso de demo — JM Designs" };
 export default async function DemoAdminPage() {
   // ⚠️ Guard de Capa B en el SERVIDOR: una cuenta de cliente no puede entrar aquí.
   if (!(await isAdminDemo())) redirect("/dashboard");
-  const cuentas = await getDemoAccesos();
+  const [cuentas, emp] = await Promise.all([getDemoAccesos(), getCurrentEmpleado()]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -45,6 +47,18 @@ export default async function DemoAdminPage() {
       </Reveal>
 
       <Reveal delay={0.15}>
+        <Card>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-semibold tracking-tight">
+            <KeyRound className="h-4 w-4 text-primary" /> Mis credenciales de administrador
+          </h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Cambia tu usuario y/o contraseña. El próximo inicio de sesión usará las nuevas.
+          </p>
+          <AdminCredencialesForm usuarioActual={emp?.username ?? "admin"} />
+        </Card>
+      </Reveal>
+
+      <Reveal delay={0.2}>
         <div className="mb-3 flex items-center gap-2">
           <Users className="h-4 w-4 text-primary" />
           <h2 className="text-base font-semibold tracking-tight">Mis cuentas ({cuentas.length})</h2>
