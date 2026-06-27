@@ -14,7 +14,7 @@ import { NavLinks } from "./nav-links";
  * de los hijos `position: fixed`, lo que limitaba el panel al alto del header.
  * Siempre se puede cerrar (X, fondo, Escape, o al navegar).
  */
-export function MobileNav({ rol, nombre }: { rol: string; nombre?: string }) {
+export function MobileNav({ rol, nombre, adminDemo }: { rol: string; nombre?: string; adminDemo?: boolean }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -75,7 +75,7 @@ export function MobileNav({ rol, nombre }: { rol: string; nombre?: string }) {
               </button>
             </div>
             <div className="-mr-1 flex-1 overflow-y-auto overscroll-contain pr-1">
-              <NavLinks rol={rol} onNavigate={() => setOpen(false)} />
+              <NavLinks rol={rol} adminDemo={adminDemo} onNavigate={() => setOpen(false)} />
             </div>
           </motion.aside>
         </div>
