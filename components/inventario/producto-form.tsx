@@ -31,10 +31,12 @@ function SubmitButton({ label }: { label: string }) {
 export function ProductoForm({
   action,
   producto,
+  defaultCodigo,
   submitLabel = "Guardar producto",
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   producto?: Producto;
+  defaultCodigo?: string;
   submitLabel?: string;
 }) {
   const [state, formAction] = useFormState(action, {} as FormState);
@@ -74,7 +76,7 @@ export function ProductoForm({
             <Input name="presentacion" defaultValue={producto?.presentacion ?? ""} placeholder="Ej. Caja 20 tabletas" />
           </Field>
           <Field label="Código de barras" className="sm:col-span-2">
-            <Input name="codigo_barras" defaultValue={producto?.codigo_barras ?? ""} placeholder="Ej. 7460010012345" inputMode="numeric" />
+            <Input name="codigo_barras" defaultValue={producto?.codigo_barras ?? defaultCodigo ?? ""} placeholder="Ej. 7460010012345" inputMode="numeric" />
           </Field>
         </div>
       </section>

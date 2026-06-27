@@ -14,6 +14,9 @@ import { ControladoBadge, RecetaBadge, BajoStockBadge } from "@/components/inven
 import { LotesTabla } from "@/components/inventario/lotes-tabla";
 import { Button } from "@/components/ui/button";
 import { getProductoDetalle } from "@/lib/data/inventory";
+import { getInteligenciaProducto } from "@/lib/data/inteligencia";
+import { getConfig } from "@/lib/data/config";
+import { InteligenciaProveedores } from "@/components/inteligencia/inteligencia-proveedores";
 import { requireCapability } from "@/lib/auth/guard";
 import { formatRD } from "@/lib/utils";
 
@@ -28,6 +31,10 @@ export default async function ProductoDetallePage({
   const detalle = await getProductoDetalle(params.id);
   if (!detalle) notFound();
   const { producto: p, lotes } = detalle;
+  const [inteligencia, config] = await Promise.all([
+    getInteligenciaProducto(params.id),
+    getConfig(),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -103,6 +110,13 @@ export default async function ProductoDetallePage({
           </div>
         </div>
       </Reveal>
+
+      {/* Inteligencia de proveedores */}
+      {inteligencia && (
+        <Reveal>
+          <InteligenciaProveedores data={inteligencia} farmacia={config.nombre_farmacia} />
+        </Reveal>
+      )}
 
       {/* Lotes */}
       <Reveal>

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
-import { Loader2, PackagePlus } from "lucide-react";
+import { Loader2, PackagePlus, Info } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { ScanButton } from "@/components/scanner/scan-button";
 import { registrarEntrada, type FormState } from "@/app/(app)/inventario/actions";
 import type { ProveedorBasico } from "@/lib/data/proveedores-shared";
 
@@ -14,6 +16,7 @@ type ProductoOpcion = {
   nombre_comercial: string;
   nombre_generico: string;
   presentacion: string | null;
+  codigo_barras: string | null;
 };
 
 function SubmitButton() {
@@ -40,22 +43,44 @@ export function EntradaForm({
 }) {
   const [state, action] = useFormState(registrarEntrada, {} as FormState);
   const [proveedorId, setProveedorId] = useState("");
+  const [productoId, setProductoId] = useState(defaultProductoId ?? "");
+  const [noEncontrado, setNoEncontrado] = useState<string | null>(null);
   const proveedorNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? "";
+
+  function onScan(codigo: string) {
+    const prod = productos.find((p) => p.codigo_barras === codigo);
+    if (prod) {
+      setProductoId(prod.id);
+      setNoEncontrado(null);
+    } else {
+      setNoEncontrado(codigo);
+    }
+  }
 
   return (
     <form action={action} className="space-y-6">
       <section className="glass rounded-2xl p-5 shadow-elev-1">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Producto" required className="sm:col-span-2">
-            <Select name="producto_id" defaultValue={defaultProductoId ?? ""} required>
-              <option value="" disabled>Selecciona un producto…</option>
-              {productos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre_comercial} — {p.nombre_generico}
-                  {p.presentacion ? ` (${p.presentacion})` : ""}
-                </option>
-              ))}
-            </Select>
+            <div className="flex gap-2">
+              <Select name="producto_id" value={productoId} onChange={(e) => setProductoId(e.target.value)} required className="flex-1">
+                <option value="" disabled>Selecciona un producto…</option>
+                {productos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre_comercial} — {p.nombre_generico}
+                    {p.presentacion ? ` (${p.presentacion})` : ""}
+                  </option>
+                ))}
+              </Select>
+              <ScanButton onDetected={onScan} />
+            </div>
+            {noEncontrado && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                <span>No hay un producto con el código <strong>{noEncontrado}</strong>.</span>
+                <Link href={`/inventario/nuevo?codigo=${noEncontrado}`} className="font-semibold underline">Crearlo</Link>
+              </div>
+            )}
           </Field>
 
           <Field label="Número de lote" required>
