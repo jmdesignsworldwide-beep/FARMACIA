@@ -36,7 +36,9 @@ export type Capacidad =
   | "ver_deliveries"
   | "gestionar_deliveries"
   | "ver_proveedores"
-  | "gestionar_proveedores";
+  | "gestionar_proveedores"
+  | "ver_config"
+  | "gestionar_config";
 
 const MATRIZ: Record<Rol, Capacidad[]> = {
   dueno: [
@@ -44,14 +46,14 @@ const MATRIZ: Record<Rol, Capacidad[]> = {
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
     "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
     "ver_clientes", "gestionar_clientes", "ver_deliveries", "gestionar_deliveries",
-    "ver_proveedores", "gestionar_proveedores",
+    "ver_proveedores", "gestionar_proveedores", "ver_config", "gestionar_config",
   ],
   admin: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",
     "editar_inventario", "ver_empleados", "gestionar_empleados", "ver_historial",
     "ver_reportes", "ver_entregas", "ver_recetas", "gestionar_recetas", "ver_controlados",
     "ver_clientes", "gestionar_clientes", "ver_deliveries", "gestionar_deliveries",
-    "ver_proveedores", "gestionar_proveedores",
+    "ver_proveedores", "gestionar_proveedores", "ver_config", "gestionar_config",
   ],
   farmaceutico: [
     "ver_dashboard", "usar_pos", "ver_ventas_todas", "usar_caja", "ver_inventario",

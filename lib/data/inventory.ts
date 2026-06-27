@@ -178,24 +178,31 @@ export async function getLotesPorVencer(
 export type InventoryStats = {
   totalProductos: number;
   bajoStock: ProductoConStock[];
+  ventanaAlerta: number;
+  porVencerAlerta: number;
   porVencer30: number;
   porVencer60: number;
   porVencer90: number;
 };
 
-/** Estadísticas para encabezados y para alimentar el dashboard. */
+/** Estadísticas para encabezados y para alimentar el dashboard. Obedece la config. */
 export async function getInventoryStats(): Promise<InventoryStats> {
   if (!isSupabaseConfigured())
-    return { totalProductos: 0, bajoStock: [], porVencer30: 0, porVencer60: 0, porVencer90: 0 };
+    return { totalProductos: 0, bajoStock: [], ventanaAlerta: 30, porVencerAlerta: 0, porVencer30: 0, porVencer60: 0, porVencer90: 0 };
 
-  const [productos, porVencer] = await Promise.all([
+  const { getConfig } = await import("./config");
+  const [productos, porVencer, config] = await Promise.all([
     getProductos(),
     getLotesPorVencer(90),
+    getConfig(),
   ]);
+  const ventana = config.dias_alerta_vencimiento;
 
   return {
     totalProductos: productos.length,
-    bajoStock: productos.filter((p) => p.bajo_stock),
+    bajoStock: productos.filter((p) => p.stock_total <= Math.max(p.stock_minimo, config.stock_minimo_default)),
+    ventanaAlerta: ventana,
+    porVencerAlerta: porVencer.filter((l) => l.dias_para_vencer <= ventana).length,
     porVencer30: porVencer.filter((l) => l.dias_para_vencer <= 30).length,
     porVencer60: porVencer.filter((l) => l.dias_para_vencer <= 60).length,
     porVencer90: porVencer.filter((l) => l.dias_para_vencer <= 90).length,
