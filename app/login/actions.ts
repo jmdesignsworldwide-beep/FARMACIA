@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { usernameToEmail } from "@/lib/utils";
+import { loginBloqueado, registrarFallo, limpiarThrottle } from "@/lib/auth/throttle";
 
 export type LoginState = { error?: string };
 
@@ -29,15 +30,24 @@ export async function login(
     };
   }
 
+  // Throttle server-side por usuario (frena ráfagas de fuerza bruta).
+  const llave = username.toLowerCase();
+  const estado = loginBloqueado(llave);
+  if (estado.bloqueado) {
+    return { error: `Demasiados intentos. Espera ${estado.minutos} min e inténtalo de nuevo.` };
+  }
+
   const supabase = createClient();
   const email = usernameToEmail(username);
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    registrarFallo(llave);
     // Mensaje genérico: no revelamos si el usuario existe o no.
     return { error: "Usuario o contraseña incorrectos." };
   }
 
+  limpiarThrottle(llave);
   redirect("/dashboard");
 }

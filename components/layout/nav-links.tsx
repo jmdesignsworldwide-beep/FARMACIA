@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { NAV_ITEMS } from "./nav-items";
+import { ShieldCheck } from "lucide-react";
+import { NAV_ITEMS, type NavItem } from "./nav-items";
 import { can } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 
+// Enlace de Capa B (JM Designs). NO se gatea por capacidad interna (Capa A),
+// sino por el flag adminDemo que el servidor calcula desde demo_accesos.
+const DEMO_ITEM: NavItem = { label: "Acceso demo", href: "/demo", icon: ShieldCheck, cap: "ver_dashboard" };
+
 /** Lista de enlaces de navegación con resaltado del activo (pill animado). */
-export function NavLinks({ rol, onNavigate }: { rol: string; onNavigate?: () => void }) {
+export function NavLinks({ rol, adminDemo, onNavigate }: { rol: string; adminDemo?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const items = NAV_ITEMS.filter((item) => can(rol, item.cap));
+  if (adminDemo) items.push(DEMO_ITEM);
 
   return (
     <nav className="flex flex-col gap-1">
