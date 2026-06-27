@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   TrendingUp, TrendingDown, ArrowDownToLine, ArrowUpFromLine, Coins, Wallet,
   Package, Moon, Sparkles, Info, ChevronRight, Banknote, Bike, Store,
-  PiggyBank, Percent, CalendarRange, ShoppingBag, BadgePercent,
+  PiggyBank, Percent, CalendarRange, ShoppingBag, BadgePercent, Lightbulb, LineChart, Minus,
 } from "lucide-react";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -20,7 +20,7 @@ import { FitText } from "@/components/ui/fit-text";
 import { IngresosEgresosChart, ComposicionChart } from "./charts";
 import { useChartColors } from "@/components/reportes/use-chart-colors";
 import { formatRD, cn } from "@/lib/utils";
-import { PERIODOS, type FinanzasData } from "@/lib/data/finanzas-shared";
+import { PERIODOS, type FinanzasData, type Tendencia } from "@/lib/data/finanzas-shared";
 
 type Panel = "entradas" | "salidas" | "ganancia" | null;
 
@@ -91,17 +91,14 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
                   <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
                     <Coins className="h-4 w-4" /> Ganancia real
                   </span>
-                  <span className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
-                    sube ? "bg-success/12 text-success" : "bg-danger/12 text-danger")}>
-                    {sube ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                    {sube ? "+" : ""}{data.tendenciaPct}%
-                  </span>
+                  <TrendBadge t={data.tendencias.ganancia} />
                 </div>
                 <FitText className="mt-3" textClassName="tabular bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
                   <CountUp value={data.ganancia} currency />
                 </FitText>
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   Ventas menos el costo de lo vendido · margen {data.margenPct}%
+                  <TrendBadge t={data.tendencias.margen} unit="pts" size="xs" />
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
                   Ver cómo se calcula <ChevronRight className="h-3.5 w-3.5" />
@@ -114,13 +111,13 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
         {/* Entró */}
         <Reveal delay={0.05} className="lg:order-1">
           <FotoCard tone="success" icon={ArrowDownToLine} label="Entró" sub="Ingresos del período"
-            value={data.entro} onClick={() => setPanel("entradas")} />
+            value={data.entro} trend={data.tendencias.entro} onClick={() => setPanel("entradas")} />
         </Reveal>
 
         {/* Salió */}
         <Reveal delay={0.1} className="lg:order-3">
           <FotoCard tone="danger" icon={ArrowUpFromLine} label="Salió" sub="Egresos del período"
-            value={data.salio} onClick={() => setPanel("salidas")} />
+            value={data.salio} trend={data.tendencias.salio} onClick={() => setPanel("salidas")} />
         </Reveal>
       </div>
 
@@ -133,12 +130,46 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
         </Reveal>
       )}
 
+      {/* ── PROYECCIÓN (mirada al futuro) ── */}
+      {data.proyeccion && (
+        <Reveal>
+          <Card className="relative overflow-hidden border-accent/30 bg-gradient-to-br from-accent/10 via-card to-primary/5">
+            <div className="absolute -left-6 -bottom-8 h-28 w-28 rounded-full bg-accent/10 blur-2xl" />
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent"><LineChart className="h-5 w-5" /></span>
+                <div>
+                  <p className="text-sm font-semibold tracking-tight">Proyección de cierre de mes</p>
+                  <p className="text-xs text-muted-foreground">
+                    A este ritmo ({data.proyeccion.pctMes}% del mes transcurrido), cerrarías cerca de:
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-5">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Ventas</p>
+                  <FitText textClassName="tabular text-xl font-bold tracking-tight"><CountUp value={data.proyeccion.ventas} currency /></FitText>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Ganancia</p>
+                  <FitText textClassName="tabular text-xl font-bold tracking-tight text-primary"><CountUp value={data.proyeccion.ganancia} currency /></FitText>
+                </div>
+              </div>
+            </div>
+            <p className="relative mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/80">
+              <Info className="h-3 w-3 shrink-0" /> Estimación al ritmo actual, no un cierre definitivo.
+            </p>
+          </Card>
+        </Reveal>
+      )}
+
       {/* ── PATRIMONIO ── */}
       <Reveal>
         <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
           <PiggyBank className="h-4 w-4 text-primary" /> El patrimonio
           <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success"><PulseDot tone="success" /> Real</span>
         </h2>
+        <Insight text={data.insights.patrimonio} />
       </Reveal>
       <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <PatrimonioCard icon={Package} tone="primary" label="Valor del inventario hoy" value={data.valorInventario}
@@ -187,7 +218,8 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Reveal>
           <Card className="h-full">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-tight"><BadgePercent className="h-4 w-4 text-success" /> Más rentables</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight"><BadgePercent className="h-4 w-4 text-success" /> Más rentables</h3>
+            <Insight text={data.insights.rentable} className="mb-3 mt-1" />
             <RentList items={data.masRentables} tone="success" />
           </Card>
         </Reveal>
@@ -244,6 +276,7 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
       <Modal open={panel === "salidas"} onClose={() => setPanel(null)} className="max-w-md">
         <PanelHeader icon={ArrowUpFromLine} tone="danger" titulo="Salidas — a dónde se va la plata"
           monto={data.salio} />
+        <Insight text={data.insights.salidas} className="mt-2" />
         <div className="mt-4 space-y-4">
           <Linea label="Compras a proveedores" value={data.compras} icon={ShoppingBag} fuerte />
           <div>
@@ -291,8 +324,8 @@ export function FinanzasView({ data }: { data: FinanzasData }) {
 
 // ── Subcomponentes ───────────────────────────────────────────────
 
-function FotoCard({ tone, icon: Icon, label, sub, value, onClick }: {
-  tone: "success" | "danger"; icon: typeof ArrowDownToLine; label: string; sub: string; value: number; onClick: () => void;
+function FotoCard({ tone, icon: Icon, label, sub, value, trend, onClick }: {
+  tone: "success" | "danger"; icon: typeof ArrowDownToLine; label: string; sub: string; value: number; trend?: Tendencia; onClick: () => void;
 }) {
   return (
     <button onClick={onClick} className="group block h-full w-full text-left">
@@ -308,11 +341,39 @@ function FotoCard({ tone, icon: Icon, label, sub, value, onClick }: {
           </span>
         </div>
         <FitText className="mt-3" textClassName="tabular text-3xl font-semibold tracking-tight"><CountUp value={value} currency /></FitText>
-        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
-          Ver detalle <ChevronRight className="h-3.5 w-3.5" />
-        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+            Ver detalle <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+          {trend && <TrendBadge t={trend} size="xs" />}
+        </div>
       </Card>
     </button>
+  );
+}
+
+/** Badge de tendencia ↑↓ con color por concepto (mejor = verde, peor = ámbar). */
+function TrendBadge({ t, unit = "%", size = "sm" }: { t: Tendencia; unit?: string; size?: "xs" | "sm" }) {
+  const plano = t.pct === 0;
+  const Icon = plano ? Minus : t.pct > 0 ? TrendingUp : TrendingDown;
+  const cls = plano ? "bg-muted text-muted-foreground" : t.mejor ? "bg-success/12 text-success" : "bg-warning/12 text-warning";
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full font-semibold",
+      cls, size === "xs" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs")}>
+      <Icon className={size === "xs" ? "h-3 w-3" : "h-3.5 w-3.5"} />
+      {t.pct > 0 ? "+" : ""}{t.pct}{unit === "pts" ? " pts" : "%"}
+      <span className="font-normal opacity-70">vs antes</span>
+    </span>
+  );
+}
+
+/** Línea de insight en cristiano (premium, no texto plano). */
+function Insight({ text, className }: { text: string; className?: string }) {
+  return (
+    <p className={cn("flex items-start gap-1.5 text-xs leading-snug text-muted-foreground", className)}>
+      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+      <span>{text}</span>
+    </p>
   );
 }
 

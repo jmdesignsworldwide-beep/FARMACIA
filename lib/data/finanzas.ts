@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { formatRD } from "@/lib/utils";
 import { getCajaActual, getCajaResumen } from "./ventas";
 import { metodoLabel } from "./ventas-shared";
 import {
@@ -12,9 +13,36 @@ import {
   type VentaLinea,
   type GastoLinea,
   type CategoriaGasto,
+  type Tendencias,
+  type Insights,
 } from "./finanzas-shared";
 
 export * from "./finanzas-shared";
+
+const pctChange = (a: number, b: number) => (b > 0 ? Math.round(((a - b) / b) * 100) : 0);
+
+/** Genera frases en cristiano a partir de los datos (reales o de muestra). */
+function construirInsights(d: {
+  capitalDormido: number;
+  dormidoCount: number;
+  masRentables: ProductoRent[];
+  tendencias: Tendencias;
+}): Insights {
+  const patrimonio =
+    d.capitalDormido > 0 && d.dormidoCount > 0
+      ? `Tienes ${formatRD(d.capitalDormido)} dormidos en ${d.dormidoCount} producto${d.dormidoCount === 1 ? "" : "s"} que no rotan — conviene moverlos o liquidarlos.`
+      : "Tu inventario rota bien: casi no hay capital dormido.";
+  const top = d.masRentables[0];
+  const rentable = top
+    ? `Tu producto de mayor margen es ${top.nombre}, con ${top.margenPct}% de margen.`
+    : "Aún no hay datos de margen por producto.";
+  const ts = d.tendencias.salio;
+  const salidas =
+    ts.pct === 0
+      ? "Tus salidas se mantienen igual que el período anterior."
+      : `Tus salidas (compras + gastos) ${ts.pct > 0 ? "subieron" : "bajaron"} ${Math.abs(ts.pct)}% vs el período anterior${ts.mejor ? ", y tu proporción de gasto mejoró." : "."}`;
+  return { patrimonio, rentable, salidas };
+}
 
 /** Umbral de ventas reales para dejar de usar la muestra del FLUJO. */
 const MIN_REAL = 15;
@@ -66,13 +94,27 @@ export async function getFinanzas(
     gastosDetalle: [] as GastoLinea[],
   };
 
+  const demoMuestra = () => {
+    const flujo = muestraFlujo(periodoMuestra);
+    const insights = construirInsights({
+      capitalDormido: base.capitalDormido,
+      dormidoCount: base.dormidoCount,
+      masRentables: base.masRentables,
+      tendencias: flujo.tendencias,
+    });
+    return { ...base, esDemo: true as const, ...flujo, insights };
+  };
+
   if (!isSupabaseConfigured()) {
-    return { ...base, esDemo: true, ...muestraFlujo(periodoMuestra) };
+    return demoMuestra();
   }
 
   const supabase = createClient();
   const hace60 = new Date();
   hace60.setDate(hace60.getDate() - 60);
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
 
   const [
     { data: ventas },
@@ -83,6 +125,10 @@ export async function getFinanzas(
     { data: egresos },
     { data: ventasRecientes },
     { data: deliveries },
+    { data: prevEgresos },
+    { data: prevLotesCompra },
+    { data: prevItems },
+    { data: ventasMes },
     cajaActual,
   ] = await Promise.all([
     supabase.from("ventas").select("id, folio, total, metodo_pago, created_at").eq("estado", "completada").gte("created_at", ISO(desde)).lte("created_at", ISO(hasta)),
@@ -93,6 +139,10 @@ export async function getFinanzas(
     supabase.from("caja_egresos").select("monto, motivo, created_at").gte("created_at", ISO(desde)).lte("created_at", ISO(hasta)),
     supabase.from("venta_items").select("producto_id, ventas!inner(created_at, estado)").eq("ventas.estado", "completada").gte("ventas.created_at", ISO(hace60)),
     supabase.from("deliveries").select("monto").eq("estado", "entregado").gte("created_at", ISO(desde)).lte("created_at", ISO(hasta)),
+    supabase.from("caja_egresos").select("monto").gte("created_at", ISO(prevDesde)).lte("created_at", ISO(prevHasta)),
+    supabase.from("lotes").select("producto_id, cantidad").gte("fecha_entrada", YMD(prevDesde)).lte("fecha_entrada", YMD(prevHasta)),
+    supabase.from("venta_items").select("producto_id, cantidad, ventas!inner(created_at, estado)").eq("ventas.estado", "completada").gte("ventas.created_at", ISO(prevDesde)).lte("ventas.created_at", ISO(prevHasta)),
+    supabase.from("ventas").select("total").eq("estado", "completada").gte("created_at", ISO(inicioMes)),
     getCajaActual(),
   ]);
 
@@ -146,7 +196,7 @@ export async function getFinanzas(
   // ── ¿Hay suficientes ventas reales para el FLUJO? ──
   const v = ventas ?? [];
   if (v.length < MIN_REAL) {
-    return { ...base, esDemo: true, ...muestraFlujo(periodoMuestra) };
+    return demoMuestra();
   }
 
   // ── FLUJO real ──
@@ -165,10 +215,13 @@ export async function getFinanzas(
   const ganancia = Math.max(entro - cogs, 0);
   const margenPct = entro > 0 ? Math.round((ganancia / entro) * 100) : 0;
 
-  // Tendencia: ganancia estimada del período anterior (mismo margen) vs actual.
+  // Período anterior (real): ingresos, COGS, ganancia y margen para tendencias.
   const prevIngresos = (prevVentas ?? []).reduce((s, x) => s + Number(x.total), 0);
-  const gananciaPrev = Math.round(prevIngresos * (margenPct / 100));
-  const tendenciaPct = gananciaPrev > 0 ? Math.round(((ganancia - gananciaPrev) / gananciaPrev) * 100) : 0;
+  let prevCogs = 0;
+  for (const it of prevItems ?? []) if (it.producto_id) prevCogs += Number(it.cantidad) * (costo.get(it.producto_id) ?? 0);
+  const gananciaPrev = Math.round(Math.max(prevIngresos - prevCogs, 0));
+  const prevMargen = prevIngresos > 0 ? (gananciaPrev / prevIngresos) * 100 : 0;
+  const tendenciaPct = pctChange(ganancia, gananciaPrev);
 
   // Por método de pago.
   const porMetMap = new Map<string, number>();
@@ -198,6 +251,43 @@ export async function getFinanzas(
   const totalGastos = gastos.reduce((s, g) => s + g.monto, 0);
   const salio = compras + totalGastos;
 
+  // Salidas del período anterior (para la tendencia y su proporción).
+  let prevCompras = 0;
+  for (const l of prevLotesCompra ?? []) prevCompras += Number(l.cantidad) * (costo.get(l.producto_id) ?? 0);
+  const prevGastos = (prevEgresos ?? []).reduce((s, e) => s + Number(e.monto), 0);
+  const prevSalio = prevCompras + prevGastos;
+  const ratioActual = entro > 0 ? salio / entro : 0;
+  const ratioPrev = prevIngresos > 0 ? prevSalio / prevIngresos : 0;
+
+  // Tendencias ↑↓ en cada número clave (con criterio por concepto).
+  const tendencias: Tendencias = {
+    entro: { pct: pctChange(entro, prevIngresos), mejor: entro >= prevIngresos },
+    salio: { pct: pctChange(salio, prevSalio), mejor: ratioActual <= ratioPrev },
+    ganancia: { pct: pctChange(ganancia, gananciaPrev), mejor: ganancia >= gananciaPrev },
+    margen: { pct: Math.round(margenPct - prevMargen), mejor: margenPct >= prevMargen },
+  };
+
+  // Proyección de cierre de mes (calendario) al ritmo actual.
+  const ventasMesTotal = (ventasMes ?? []).reduce((s, x) => s + Number(x.total), 0);
+  const hoy = new Date();
+  const diaDelMes = hoy.getDate();
+  const diasMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+  const proyeccion =
+    ventasMesTotal > 0 && diaDelMes > 0
+      ? {
+          ventas: Math.round((ventasMesTotal / diaDelMes) * diasMes),
+          ganancia: Math.round((ventasMesTotal / diaDelMes) * diasMes * (margenPct / 100)),
+          pctMes: Math.round((diaDelMes / diasMes) * 100),
+        }
+      : null;
+
+  const insights = construirInsights({
+    capitalDormido: base.capitalDormido,
+    dormidoCount: base.dormidoCount,
+    masRentables: base.masRentables,
+    tendencias,
+  });
+
   // Serie ingresos vs egresos por día del período.
   const serie = serieReal(v, gastosDetalle, compras);
 
@@ -220,6 +310,9 @@ export async function getFinanzas(
     totalGastos,
     gastosDetalle,
     serie,
+    tendencias,
+    proyeccion,
+    insights,
   };
 }
 
