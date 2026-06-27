@@ -49,5 +49,6 @@ export async function login(
   }
 
   limpiarThrottle(llave);
-  redirect("/dashboard");
+  // ?welcome=1 dispara la bienvenida cinematográfica una sola vez tras el login.
+  redirect("/dashboard?welcome=1");
 }
