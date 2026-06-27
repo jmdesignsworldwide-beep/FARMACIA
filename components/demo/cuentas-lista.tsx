@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ShieldCheck, Clock, Power, RefreshCw, Loader2, CalendarClock, Crown, User } from "lucide-react";
+import { ShieldCheck, Clock, Power, RefreshCw, Loader2, CalendarClock, Crown, User, Trash2, AlertTriangle } from "lucide-react";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { CountUp } from "@/components/motion/count-up";
 import { PulseDot } from "@/components/motion/pulse-dot";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { renovarCuentaDemo, toggleCuentaDemo } from "@/app/(app)/demo/actions";
+import { renovarCuentaDemo, toggleCuentaDemo, eliminarCuentaDemo } from "@/app/(app)/demo/actions";
 import { diasRestantes, estadoVigencia, VIGENCIA_META, type DemoAcceso } from "@/lib/data/demo-acceso-shared";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ function fecha(iso: string | null): string {
 
 export function CuentasLista({ cuentas }: { cuentas: DemoAcceso[] }) {
   const [renovar, setRenovar] = useState<DemoAcceso | null>(null);
+  const [eliminar, setEliminar] = useState<DemoAcceso | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +36,15 @@ export function CuentasLista({ cuentas }: { cuentas: DemoAcceso[] }) {
     startTransition(async () => {
       const r = await toggleCuentaDemo(c.id, !c.activo);
       if (r.error) setError(r.error);
+    });
+  }
+
+  function aplicarEliminar() {
+    if (!eliminar) return;
+    startTransition(async () => {
+      const r = await eliminarCuentaDemo(eliminar.id);
+      if (r.error) setError(r.error);
+      else { setError(null); setEliminar(null); }
     });
   }
 
@@ -89,7 +99,7 @@ export function CuentasLista({ cuentas }: { cuentas: DemoAcceso[] }) {
                     </div>
                   )}
                   {!c.es_admin_demo && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
                       <Button variant="outline" size="sm" onClick={() => { setError(null); setRenovar(c); }} disabled={pending}>
                         <RefreshCw className="h-4 w-4" /> Renovar
                       </Button>
@@ -97,6 +107,10 @@ export function CuentasLista({ cuentas }: { cuentas: DemoAcceso[] }) {
                         title={c.activo ? "Desactivar" : "Activar"}>
                         <Power className={cn("h-4 w-4", c.activo ? "text-success" : "text-muted-foreground")} />
                         <span className="hidden sm:inline">{c.activo ? "Activa" : "Inactiva"}</span>
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setError(null); setEliminar(c); }} disabled={pending}
+                        title="Eliminar cuenta" className="text-muted-foreground hover:bg-danger/10 hover:text-danger">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -126,6 +140,29 @@ export function CuentasLista({ cuentas }: { cuentas: DemoAcceso[] }) {
               ))}
             </div>
             <Button variant="ghost" onClick={() => setRenovar(null)} disabled={pending} className="mt-4 w-full">Cancelar</Button>
+          </>
+        )}
+      </Modal>
+
+      {/* Modal eliminar (confirmación obligatoria) */}
+      <Modal open={Boolean(eliminar)} onClose={() => !pending && setEliminar(null)} tone="danger" className="max-w-sm">
+        {eliminar && (
+          <>
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-danger/12 text-danger"><AlertTriangle className="h-5 w-5" /></span>
+              <h2 className="text-lg font-semibold tracking-tight">Eliminar cuenta</h2>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              ¿Seguro que deseas eliminar la cuenta de <strong className="text-foreground">{eliminar.username}</strong>?
+              Esta acción <strong className="text-danger">no se puede deshacer</strong>.
+            </p>
+            {error && <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">{error}</p>}
+            <div className="mt-5 flex gap-2">
+              <Button variant="ghost" onClick={() => setEliminar(null)} disabled={pending} className="flex-1">Cancelar</Button>
+              <Button onClick={aplicarEliminar} disabled={pending} className="flex-1 bg-danger text-white hover:shadow-glow">
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Eliminar
+              </Button>
+            </div>
           </>
         )}
       </Modal>

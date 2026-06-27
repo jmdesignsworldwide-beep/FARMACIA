@@ -204,6 +204,32 @@ export async function actualizarCredencialesAdmin(_prev: FormState, formData: Fo
   return { ok: true };
 }
 
+/**
+ * Elimina una cuenta de CLIENTE de forma real y limpia.
+ * Protecciones: solo el admin del demo (servidor); la cuenta admin NUNCA se
+ * elimina (aquí y por trigger en la base). Borrar la cuenta de auth elimina en
+ * cascada su perfil y su acceso de demo; las referencias operativas quedan en
+ * NULL — el historial inviolable de la farmacia NO se borra.
+ */
+export async function eliminarCuentaDemo(id: string): Promise<FormState> {
+  if (!(await isAdminDemo())) return { error: "Solo el administrador del demo puede eliminar cuentas." };
+  if (!isAdminConfigured()) return { error: "Falta la llave de servidor." };
+
+  const acceso = await getDemoAcceso(id);
+  if (!acceso) return { error: "Cuenta no encontrada." };
+  // Protección no negociable: el admin del demo jamás se elimina.
+  if (acceso.es_admin_demo) return { error: "La cuenta de administrador no se puede eliminar." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(acceso.user_id);
+  if (error) return { error: "No se pudo eliminar la cuenta." };
+
+  await logActividad("cuenta_demo_eliminada", `Cuenta de demo eliminada: ${acceso.username}`, { usuario: acceso.username });
+
+  revalidatePath("/demo");
+  return { ok: true };
+}
+
 export async function toggleCuentaDemo(id: string, activo: boolean): Promise<FormState> {
   if (!(await isAdminDemo())) return { error: "Solo el administrador del demo puede cambiar cuentas." };
   if (!isAdminConfigured()) return { error: "Falta la llave de servidor." };
