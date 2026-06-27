@@ -401,10 +401,9 @@ function RentList({ items, tone }: { items: FinanzasData["masRentables"]; tone: 
   if (items.length === 0) return <p className="py-6 text-center text-sm text-muted-foreground">Sin datos de productos.</p>;
   return (
     <ul className="space-y-2">
-      {items.map((p) => (
-        <li key={p.productoId ?? p.nombre}>
-          <Link href={p.productoId ? `/inventario/${p.productoId}` : "#"}
-            className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 px-3 py-2 transition-colors hover:bg-muted">
+      {items.map((p) => {
+        const inner = (
+          <>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{p.nombre}</p>
               <p className="text-xs text-muted-foreground">Costo {formatRD(p.costo)} · Venta {formatRD(p.venta)}</p>
@@ -413,10 +412,20 @@ function RentList({ items, tone }: { items: FinanzasData["masRentables"]; tone: 
               tone === "success" ? "bg-success/12 text-success" : "bg-warning/12 text-warning")}>
               {p.margenPct}%
             </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </li>
-      ))}
+            {p.productoId && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />}
+          </>
+        );
+        const cls = "flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 px-3 py-2";
+        return (
+          <li key={p.productoId ?? p.nombre}>
+            {p.productoId ? (
+              <Link href={`/inventario/${p.productoId}`} className={`group ${cls} transition-colors hover:bg-muted`}>{inner}</Link>
+            ) : (
+              <div className={cls}>{inner}</div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

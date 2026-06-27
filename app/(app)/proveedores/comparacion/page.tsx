@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Info, BadgeCheck } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { Card } from "@/components/ui/card";
@@ -33,8 +34,10 @@ export default async function ComparacionPage() {
             </thead>
             <tbody>
               {filas.map((f) => (
-                <tr key={f.producto} className="border-b border-border/40 last:border-0">
-                  <td className="px-4 py-3 font-medium">{f.producto}</td>
+                <tr key={f.producto} className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/inventario/${f.productoId}`} className="inline-flex items-center gap-1 underline-offset-2 hover:text-primary hover:underline">{f.producto}</Link>
+                  </td>
                   {f.precios.map((p) => (
                     <td key={p.proveedor} className="px-4 py-3 text-right">
                       <span className={cn("tabular inline-flex items-center gap-1", p.proveedor === f.mejor ? "font-semibold text-success" : "")}>
