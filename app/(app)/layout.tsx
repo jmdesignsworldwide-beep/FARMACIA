@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { WelcomeGate } from "@/components/welcome/welcome-gate";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { getCurrentEmpleado } from "@/lib/data/empleados";
 import { getMiAccesoDemo } from "@/lib/data/demo-acceso";
@@ -36,6 +37,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-dvh">
+      <WelcomeGate nombre={nombre} farmacia={farmacia} />
       <Sidebar rol={rol} nombre={farmacia} adminDemo={adminDemo} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header username={username} nombre={nombre} rol={rol} farmacia={farmacia} adminDemo={adminDemo} />
