@@ -19,6 +19,14 @@ export async function getProductosParaReceta(): Promise<ProductoReceta[]> {
   return (data ?? []) as ProductoReceta[];
 }
 
+/** Médicos ya registrados (distintos) para autocompletar. */
+export async function getMedicosSugeridos(): Promise<string[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createClient();
+  const { data } = await supabase.from("recetas").select("medico_nombre").not("medico_nombre", "is", null);
+  return [...new Set((data ?? []).map((d: any) => d.medico_nombre).filter(Boolean))].sort() as string[];
+}
+
 /** Listado de recetas (busca por paciente, médico o número). */
 export async function getRecetas(q?: string): Promise<RecetaResumen[]> {
   if (!isSupabaseConfigured()) return [];

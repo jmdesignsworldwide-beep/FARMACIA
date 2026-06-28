@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { ProductoForm } from "@/components/inventario/producto-form";
-import { getProductoDetalle } from "@/lib/data/inventory";
+import { getProductoDetalle, getLaboratorios } from "@/lib/data/inventory";
 import { requireCapability } from "@/lib/auth/guard";
 import { actualizarProducto } from "../../actions";
 
@@ -15,7 +15,7 @@ export default async function EditarProductoPage({
   params: { id: string };
 }) {
   await requireCapability("editar_inventario");
-  const detalle = await getProductoDetalle(params.id);
+  const [detalle, laboratorios] = await Promise.all([getProductoDetalle(params.id), getLaboratorios()]);
   if (!detalle) notFound();
   const { producto } = detalle;
   const action = actualizarProducto.bind(null, params.id);
@@ -32,7 +32,7 @@ export default async function EditarProductoPage({
       </Reveal>
 
       <Reveal delay={0.05}>
-        <ProductoForm action={action} producto={producto} submitLabel="Guardar cambios" />
+        <ProductoForm action={action} producto={producto} laboratorios={laboratorios} submitLabel="Guardar cambios" />
       </Reveal>
     </div>
   );

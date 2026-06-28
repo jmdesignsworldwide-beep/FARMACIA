@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
-import { Loader2, Bike } from "lucide-react";
+import { Loader2, Bike, Contact, User } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { METODOS_PAGO } from "@/lib/data/ventas-shared";
 import { crearDelivery, type FormState } from "@/app/(app)/deliveries/actions";
+import { crearClienteRapido } from "@/app/(app)/clientes/actions";
 import type { ClienteBasico } from "@/lib/data/clientes-shared";
 
 type Motorista = { id: string; nombre: string };
@@ -19,15 +21,11 @@ function SubmitBtn() {
 
 export function DeliveryForm({ clientes, motoristas }: { clientes: ClienteBasico[]; motoristas: Motorista[] }) {
   const [state, action] = useFormState(crearDelivery, {} as FormState);
+  const [clientesAll, setClientesAll] = useState(clientes);
   const [clienteId, setClienteId] = useState("");
   const [clienteNombre, setClienteNombre] = useState("");
   const [motoristaId, setMotoristaId] = useState("");
 
-  function onCliente(id: string) {
-    setClienteId(id);
-    const c = clientes.find((x) => x.id === id);
-    if (c) setClienteNombre(c.nombre);
-  }
   const motoristaNombre = motoristas.find((m) => m.id === motoristaId)?.nombre ?? "";
 
   return (
@@ -39,10 +37,21 @@ export function DeliveryForm({ clientes, motoristas }: { clientes: ClienteBasico
         <h2 className="mb-4 text-sm font-semibold tracking-tight">Cliente y destino</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Cliente registrado">
-            <Select value={clienteId} onChange={(e) => onCliente(e.target.value)}>
-              <option value="">Otro / escribir</option>
-              {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </Select>
+            <Autocomplete
+              kind="select"
+              icon={Contact}
+              placeholder="Buscar o crear cliente…"
+              options={clientesAll.map((c) => ({ value: c.id, label: c.nombre, sub: c.cedula ?? undefined }))}
+              onChange={(value, label) => { setClienteId(value); if (label) setClienteNombre(label); }}
+              onCreate={async (texto) => {
+                const r = await crearClienteRapido(texto);
+                if (!r.ok || !r.id) return null;
+                setClientesAll((prev) => [...prev, { id: r.id!, nombre: r.nombre!, cedula: null, alergias: [] }]);
+                setClienteId(r.id);
+                setClienteNombre(r.nombre!);
+                return { value: r.id, label: r.nombre! };
+              }}
+            />
           </Field>
           <Field label="Nombre del cliente" required>
             <Input name="cliente_nombre" value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} placeholder="Nombre" required />
@@ -64,10 +73,15 @@ export function DeliveryForm({ clientes, motoristas }: { clientes: ClienteBasico
             </Select>
           </Field>
           <Field label="Motorista" className="sm:col-span-2">
-            <Select name="motorista_id" value={motoristaId} onChange={(e) => setMotoristaId(e.target.value)}>
-              <option value="">Sin asignar</option>
-              {motoristas.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-            </Select>
+            <input type="hidden" name="motorista_id" value={motoristaId} />
+            <Autocomplete
+              kind="select"
+              icon={User}
+              placeholder="Asignar motorista…"
+              emptyText="Sin motoristas registrados"
+              options={motoristas.map((m) => ({ value: m.id, label: m.nombre }))}
+              onChange={(value) => setMotoristaId(value)}
+            />
           </Field>
           <Field label="Notas" className="sm:col-span-2"><Input name="notas" placeholder="Indicaciones de entrega" /></Field>
         </div>

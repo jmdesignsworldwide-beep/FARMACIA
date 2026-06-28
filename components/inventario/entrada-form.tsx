@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
 import { Loader2, PackagePlus, Info } from "lucide-react";
+import { Truck } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { ScanButton } from "@/components/scanner/scan-button";
 import { registrarEntrada, type FormState } from "@/app/(app)/inventario/actions";
+import { crearProveedorRapido } from "@/app/(app)/proveedores/actions";
 import type { ProveedorBasico } from "@/lib/data/proveedores-shared";
 
 type ProductoOpcion = {
@@ -43,12 +46,13 @@ export function EntradaForm({
   defaultProductoId?: string;
 }) {
   const [state, action] = useFormState(registrarEntrada, {} as FormState);
+  const [proveedoresAll, setProveedoresAll] = useState(proveedores);
   const [proveedorId, setProveedorId] = useState("");
   const [productoId, setProductoId] = useState(defaultProductoId ?? "");
   const [noEncontrado, setNoEncontrado] = useState<string | null>(null);
   const [cant, setCant] = useState<number>(0);
   const [entradaModo, setEntradaModo] = useState<"unidad" | "caja">("unidad");
-  const proveedorNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? "";
+  const proveedorNombre = proveedoresAll.find((p) => p.id === proveedorId)?.nombre ?? "";
 
   const upc = productos.find((p) => p.id === productoId)?.unidades_por_caja ?? 1;
   const porCaja = entradaModo === "caja" && upc > 1;
@@ -119,12 +123,20 @@ export function EntradaForm({
           <Field label="Proveedor" className="sm:col-span-2">
             <input type="hidden" name="proveedor_id" value={proveedorId} />
             <input type="hidden" name="proveedor" value={proveedorNombre} />
-            <Select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)}>
-              <option value="">Sin proveedor</option>
-              {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </Select>
+            <Autocomplete
+              kind="select"
+              icon={Truck}
+              placeholder="Escribe para buscar o crear un proveedor…"
+              options={proveedoresAll.map((p) => ({ value: p.id, label: p.nombre }))}
+              onChange={(value) => setProveedorId(value)}
+              onCreate={async (texto) => {
+                const r = await crearProveedorRapido(texto);
+                if (!r.ok || !r.id) return null;
+                setProveedoresAll((prev) => [...prev, { id: r.id!, nombre: r.nombre! }]);
+                setProveedorId(r.id);
+                return { value: r.id, label: r.nombre! };
+              }}
+            />
           </Field>
         </div>
       </section>

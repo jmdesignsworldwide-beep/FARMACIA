@@ -25,6 +25,27 @@ function parse(formData: FormData) {
   };
 }
 
+/** Crear cliente "al vuelo" desde un autocompletado (solo nombre). Valida rol en el servidor. */
+export async function crearClienteRapido(nombre: string): Promise<{ ok: boolean; id?: string; nombre?: string; error?: string }> {
+  const { ok, empleado } = await checkCapability("gestionar_clientes");
+  if (!ok || !empleado) return { ok: false, error: "Sin permiso para registrar clientes." };
+  const n = (nombre ?? "").trim();
+  if (n.length < 2) return { ok: false, error: "Nombre muy corto." };
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("clientes")
+    .insert({ nombre: n, alergias: [], balance: 0, empleado_id: empleado.id, empleado_nombre: empleado.full_name ?? empleado.username })
+    .select("id, nombre")
+    .single();
+  if (error || !data) return { ok: false, error: "No se pudo crear el cliente." };
+  await supabase.rpc("registrar_actividad", {
+    p_tipo: "cliente_registrado", p_desc: `Cliente registrado: ${n}`,
+    p_detalle: { cliente: n, via: "autocompletado" }, p_ref_tabla: "clientes", p_ref_id: data.id,
+  });
+  revalidatePath("/clientes");
+  return { ok: true, id: data.id, nombre: data.nombre };
+}
+
 export async function crearCliente(_prev: FormState, formData: FormData): Promise<FormState> {
   const { ok, empleado } = await checkCapability("gestionar_clientes");
   if (!ok || !empleado) return { error: "No tienes permiso para registrar clientes." };
