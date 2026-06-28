@@ -4,14 +4,16 @@ import { KpiGrid } from "@/components/dashboard/kpi-grid";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AttentionList } from "@/components/dashboard/attention-list";
 import { DaySummary } from "@/components/dashboard/day-summary";
+import { ResumenDia } from "@/components/dashboard/resumen-dia";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  await requireCapability("ver_dashboard");
+  const emp = await requireCapability("ver_dashboard");
   const data = await getDashboardData();
+  const nombre = emp.full_name?.split(" ")[0] ?? emp.username;
   const today = new Date().toLocaleDateString("es-DO", {
     weekday: "long",
     day: "numeric",
@@ -36,6 +38,16 @@ export default async function DashboardPage() {
           </span>
         </div>
       </Reveal>
+
+      {/* Resumen inteligente del día */}
+      <ResumenDia
+        nombre={nombre}
+        lotesSemana={data.expiring.within7}
+        enCaja={data.cashOnHand.amount}
+        bajoStock={data.lowStock.count}
+        topProducto={data.daySummary.topProduct}
+        esDemo={data.esDemo}
+      />
 
       {/* Los 4 KPIs grandes que respiran */}
       <KpiGrid data={data} />
