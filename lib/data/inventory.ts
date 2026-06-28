@@ -128,6 +128,14 @@ export async function getProductoDetalle(id: string): Promise<{
   };
 }
 
+/** Laboratorios existentes (distintos) para autocompletar. */
+export async function getLaboratorios(): Promise<string[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createClient();
+  const { data } = await supabase.from("productos").select("laboratorio").not("laboratorio", "is", null);
+  return [...new Set((data ?? []).map((d: any) => d.laboratorio).filter(Boolean))].sort() as string[];
+}
+
 /** Lista corta para selectores (entrada de mercancía). */
 export async function getProductosBasico(): Promise<
   Pick<Producto, "id" | "nombre_comercial" | "nombre_generico" | "presentacion" | "codigo_barras" | "unidades_por_caja">[]

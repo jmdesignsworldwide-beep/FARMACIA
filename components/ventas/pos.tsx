@@ -6,15 +6,17 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Search, ScanLine, Plus, Minus, Trash2, ShoppingCart, Banknote,
-  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, Star,
+  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, Star, Contact,
 } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { CountUp } from "@/components/motion/count-up";
 import { PulseDot } from "@/components/motion/pulse-dot";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
 import { FitText } from "@/components/ui/fit-text";
+import { Autocomplete } from "@/components/ui/autocomplete";
+import { crearClienteRapido } from "@/app/(app)/clientes/actions";
 import { ControladoBadge, RecetaBadge } from "@/components/inventario/badges";
 import { ScanButton } from "@/components/scanner/scan-button";
 import { ControladoModal, type RecetaDatos } from "./controlado-modal";
@@ -76,6 +78,7 @@ export function POS({
   const [categoria, setCategoria] = useState("");
   const [proveedorSel, setProveedorSel] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [clientesAll, setClientesAll] = useState(clientes);
   const [clienteId, setClienteId] = useState("");
   const [descuento, setDescuento] = useState(0);
   const [metodo, setMetodo] = useState<string>("efectivo");
@@ -121,7 +124,7 @@ export function POS({
 
   const sinFiltro = !query.trim() && !categoria && !proveedorSel;
 
-  const cliente = clientes.find((c) => c.id === clienteId) ?? null;
+  const cliente = clientesAll.find((c) => c.id === clienteId) ?? null;
   const subtotal = cart.reduce((s, l) => s + precioModo(l.producto, l.modo) * l.cantidad, 0);
   const total = Math.max(subtotal - descuento, 0);
   const cambio = metodo === "efectivo" ? Math.max(recibido - total, 0) : 0;
@@ -261,12 +264,20 @@ export function POS({
       )}
 
       <div className="mt-3 shrink-0">
-        <Select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className="h-10 py-2 text-sm">
-          <option value="">Cliente: sin asociar</option>
-          {clientes.map((c) => (
-            <option key={c.id} value={c.id}>{c.nombre}{c.cedula ? ` · ${c.cedula}` : ""}</option>
-          ))}
-        </Select>
+        <Autocomplete
+          kind="select"
+          icon={Contact}
+          placeholder="Cliente: escribe para buscar o crear…"
+          options={clientesAll.map((c) => ({ value: c.id, label: c.nombre, sub: c.cedula ?? undefined }))}
+          onChange={(value) => setClienteId(value)}
+          onCreate={async (texto) => {
+            const r = await crearClienteRapido(texto);
+            if (!r.ok || !r.id) return null;
+            setClientesAll((prev) => [...prev, { id: r.id!, nombre: r.nombre!, cedula: null, alergias: [] }]);
+            setClienteId(r.id);
+            return { value: r.id, label: r.nombre! };
+          }}
+        />
         {cliente && cliente.alergias.length > 0 && (
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-medium text-danger">
             <PulseDot tone="danger" />

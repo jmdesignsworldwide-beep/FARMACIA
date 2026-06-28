@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { motion } from "framer-motion";
 import { Loader2, Save } from "lucide-react";
-import { Field, Input, Select, Toggle } from "@/components/ui/field";
+import { Field, Input, Toggle } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { CATEGORIAS } from "@/lib/data/categorias";
 import { formatRD, cn } from "@/lib/utils";
 import type { FormState } from "@/app/(app)/inventario/actions";
@@ -52,11 +53,13 @@ export function ProductoForm({
   action,
   producto,
   defaultCodigo,
+  laboratorios = [],
   submitLabel = "Guardar producto",
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   producto?: Producto;
   defaultCodigo?: string;
+  laboratorios?: string[];
   submitLabel?: string;
 }) {
   const [state, formAction] = useFormState(action, {} as FormState);
@@ -86,14 +89,14 @@ export function ProductoForm({
             <Input name="nombre_generico" defaultValue={producto?.nombre_generico} placeholder="Ej. Acetaminofén" required />
           </Field>
           <Field label="Laboratorio">
-            <Input name="laboratorio" defaultValue={producto?.laboratorio ?? ""} placeholder="Ej. GSK" />
+            <Autocomplete kind="text" name="laboratorio" placeholder="Ej. GSK"
+              options={laboratorios.map((l) => ({ value: l, label: l }))}
+              defaultValue={producto?.laboratorio ?? ""} />
           </Field>
           <Field label="Categoría" required>
-            <Select name="categoria" defaultValue={producto?.categoria ?? "Analgésicos"}>
-              {CATEGORIAS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </Select>
+            <Autocomplete kind="text" name="categoria" required placeholder="Ej. Analgésicos"
+              options={CATEGORIAS.map((c) => ({ value: c, label: c }))}
+              defaultValue={producto?.categoria ?? "Analgésicos"} />
           </Field>
           <Field label="Concentración">
             <Input name="concentracion" defaultValue={producto?.concentracion ?? ""} placeholder="Ej. 500 mg" />

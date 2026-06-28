@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { ProductoForm } from "@/components/inventario/producto-form";
 import { requireCapability } from "@/lib/auth/guard";
+import { getLaboratorios } from "@/lib/data/inventory";
 import { crearProducto } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ export const metadata = { title: "Nuevo producto — JM Farmacia" };
 export default async function NuevoProductoPage({ searchParams }: { searchParams: { codigo?: string } }) {
   await requireCapability("editar_inventario");
   const codigo = searchParams.codigo?.trim();
+  const laboratorios = await getLaboratorios();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Reveal>
@@ -24,7 +26,7 @@ export default async function NuevoProductoPage({ searchParams }: { searchParams
       </Reveal>
 
       <Reveal delay={0.05}>
-        <ProductoForm action={crearProducto} defaultCodigo={codigo} submitLabel="Crear producto" />
+        <ProductoForm action={crearProducto} defaultCodigo={codigo} laboratorios={laboratorios} submitLabel="Crear producto" />
       </Reveal>
     </div>
   );

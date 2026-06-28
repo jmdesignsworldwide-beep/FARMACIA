@@ -7,6 +7,7 @@ import { Plus, Trash2, ShieldAlert, Loader2, Paperclip, FileCheck2, Save, Info }
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { crearReceta, type FormState } from "@/app/(app)/recetas/actions";
 import type { ProductoReceta } from "@/lib/data/recetas-shared";
 
@@ -23,7 +24,7 @@ function PendingDot() {
   return pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />;
 }
 
-export function RecetaForm({ productos }: { productos: ProductoReceta[] }) {
+export function RecetaForm({ productos, medicos = [], pacientes = [] }: { productos: ProductoReceta[]; medicos?: string[]; pacientes?: string[] }) {
   const [state, action] = useFormState(crearReceta, {} as FormState);
   const formRef = useRef<HTMLFormElement>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -73,9 +74,15 @@ export function RecetaForm({ productos }: { productos: ProductoReceta[] }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Número de receta"><Input name="numero" placeholder="Ej. RX-2026-0123" /></Field>
           <Field label="Fecha"><Input name="fecha" type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></Field>
-          <Field label="Médico" required><Input name="medico_nombre" placeholder="Dr(a). Nombre" required /></Field>
+          <Field label="Médico" required>
+            <Autocomplete kind="text" name="medico_nombre" required placeholder="Dr(a). Nombre"
+              options={medicos.map((m) => ({ value: m, label: m }))} />
+          </Field>
           <Field label="Colegiatura (exequátur)"><Input name="medico_colegiatura" placeholder="Ej. CMD-12345" /></Field>
-          <Field label="Paciente" required><Input name="paciente_nombre" placeholder="Nombre del paciente" required /></Field>
+          <Field label="Paciente" required>
+            <Autocomplete kind="text" name="paciente_nombre" required placeholder="Nombre del paciente"
+              options={pacientes.map((p) => ({ value: p, label: p }))} />
+          </Field>
           <Field label="Cédula del paciente"><Input name="paciente_cedula" placeholder="001-1234567-8" /></Field>
         </div>
       </section>
