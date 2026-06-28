@@ -50,6 +50,47 @@ export async function getProductosVendibles(): Promise<ProductoVendible[]> {
   })) as ProductoVendible[];
 }
 
+/** IDs de productos más vendidos (de ventas reales completadas), de mayor a menor. */
+export async function getMasVendidosIds(limit = 12): Promise<string[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("venta_items")
+    .select("producto_id, cantidad, ventas!inner(estado)")
+    .eq("ventas.estado", "completada")
+    .not("producto_id", "is", null);
+  const acc = new Map<string, number>();
+  for (const it of (data ?? []) as any[]) {
+    if (it.producto_id) acc.set(it.producto_id, (acc.get(it.producto_id) ?? 0) + Number(it.cantidad));
+  }
+  return [...acc.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([id]) => id);
+}
+
+/** Vínculo proveedor↔producto (vía lotes, fuente única): lista de proveedores + mapa producto→proveedores. */
+export async function getProveedorPorProducto(): Promise<{
+  proveedores: { id: string; nombre: string }[];
+  mapa: Record<string, string[]>;
+}> {
+  if (!isSupabaseConfigured()) return { proveedores: [], mapa: {} };
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("lotes")
+    .select("producto_id, proveedor_id, proveedores(id, nombre)")
+    .not("proveedor_id", "is", null);
+  const mapa: Record<string, string[]> = {};
+  const provs = new Map<string, string>();
+  for (const l of (data ?? []) as any[]) {
+    if (!l.proveedor_id) continue;
+    (mapa[l.producto_id] ??= []);
+    if (!mapa[l.producto_id].includes(l.proveedor_id)) mapa[l.producto_id].push(l.proveedor_id);
+    if (l.proveedores?.nombre) provs.set(l.proveedor_id, l.proveedores.nombre);
+  }
+  const proveedores = [...provs.entries()]
+    .map(([id, nombre]) => ({ id, nombre }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  return { proveedores, mapa };
+}
+
 /** Caja abierta actual (o null). */
 export async function getCajaActual(): Promise<Caja | null> {
   if (!isSupabaseConfigured()) return null;

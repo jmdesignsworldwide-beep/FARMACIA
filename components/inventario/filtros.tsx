@@ -12,7 +12,7 @@ const CHIPS = [
   { key: "receta", label: "Receta" },
 ] as const;
 
-export function Filtros() {
+export function Filtros({ proveedores = [] }: { proveedores?: { id: string; nombre: string }[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -79,6 +79,19 @@ export function Filtros() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+
+        {proveedores.length > 0 && (
+          <select
+            value={params.get("proveedor") ?? ""}
+            onChange={(e) => update("proveedor", e.target.value || null)}
+            className="rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring sm:w-52"
+          >
+            <option value="">Todos los proveedores</option>
+            {proveedores.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
