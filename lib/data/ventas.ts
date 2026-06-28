@@ -25,7 +25,7 @@ export async function getProductosVendibles(): Promise<ProductoVendible[]> {
     supabase
       .from("productos_con_stock")
       .select(
-        "id, nombre_comercial, nombre_generico, concentracion, presentacion, categoria, codigo_barras, precio_venta, controlado, requiere_receta, stock_total, unidades_por_caja, vende_caja, precio_caja, vende_unidad",
+        "id, nombre_comercial, nombre_generico, concentracion, presentacion, categoria, codigo_barras, precio_venta, controlado, requiere_receta, stock_total, stock_minimo, unidades_por_caja, vende_caja, precio_caja, vende_unidad",
       )
       .eq("activo", true)
       .gt("stock_total", 0)
