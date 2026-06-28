@@ -62,6 +62,7 @@ export type ProductoFiltros = {
   controlado?: boolean;
   receta?: boolean;
   bajoStock?: boolean;
+  proveedor?: string; // id del proveedor (vía lotes)
 };
 
 // ── Consultas ──────────────────────────────────────────────────
@@ -88,6 +89,17 @@ export async function getProductos(
   if (filtros.controlado) query = query.eq("controlado", true);
   if (filtros.receta) query = query.eq("requiere_receta", true);
   if (filtros.bajoStock) query = query.eq("bajo_stock", true);
+
+  // Filtro por proveedor: productos con al menos un lote de ese proveedor (fuente única).
+  if (filtros.proveedor) {
+    const { data: lotes } = await supabase
+      .from("lotes")
+      .select("producto_id")
+      .eq("proveedor_id", filtros.proveedor);
+    const ids = [...new Set((lotes ?? []).map((l: any) => l.producto_id))];
+    if (ids.length === 0) return [];
+    query = query.in("id", ids);
+  }
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);

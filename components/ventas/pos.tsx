@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Search, ScanLine, Plus, Minus, Trash2, ShoppingCart, Banknote,
-  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp,
+  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, Star,
 } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
@@ -58,16 +58,23 @@ export function POS({
   cajaAbierta,
   farmacia,
   empleado,
+  proveedores,
+  proveedorPorProducto,
+  masVendidos,
 }: {
   productos: ProductoVendible[];
   clientes: ClienteBasico[];
   cajaAbierta: boolean;
   farmacia: string;
   empleado: string;
+  proveedores: { id: string; nombre: string }[];
+  proveedorPorProducto: Record<string, string[]>;
+  masVendidos: ProductoVendible[];
 }) {
   const reduce = useReducedMotion();
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [proveedorSel, setProveedorSel] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [clienteId, setClienteId] = useState("");
   const [descuento, setDescuento] = useState(0);
@@ -102,14 +109,17 @@ export function POS({
     const q = query.trim().toLowerCase();
     let list = productos;
     if (categoria) list = list.filter((p) => p.categoria === categoria);
+    if (proveedorSel) list = list.filter((p) => (proveedorPorProducto[p.id] ?? []).includes(proveedorSel));
     if (q) list = list.filter(
       (p) =>
         p.nombre_comercial.toLowerCase().includes(q) ||
         p.nombre_generico.toLowerCase().includes(q) ||
         (p.codigo_barras ?? "").includes(q),
     );
-    return list.slice(0, q || categoria ? 30 : 18);
-  }, [productos, query, categoria]);
+    return list.slice(0, q || categoria || proveedorSel ? 30 : 18);
+  }, [productos, query, categoria, proveedorSel, proveedorPorProducto]);
+
+  const sinFiltro = !query.trim() && !categoria && !proveedorSel;
 
   const cliente = clientes.find((c) => c.id === clienteId) ?? null;
   const subtotal = cart.reduce((s, l) => s + precioModo(l.producto, l.modo) * l.cantidad, 0);
@@ -434,13 +444,44 @@ export function POS({
           <ScanButton onDetected={(c) => setQuery(c)} label="" />
         </div>
 
-        {/* Chips de categoría */}
-        <div className="flex flex-wrap gap-2">
+        {/* Chips de categoría + filtro por proveedor */}
+        <div className="flex flex-wrap items-center gap-2">
           <Chip active={categoria === ""} onClick={() => setCategoria("")}>Todos</Chip>
           {categorias.map((c) => (
             <Chip key={c} active={categoria === c} onClick={() => setCategoria(categoria === c ? "" : c)}>{c}</Chip>
           ))}
+          {proveedores.length > 0 && (
+            <select value={proveedorSel} onChange={(e) => setProveedorSel(e.target.value)}
+              className={cn("ml-auto rounded-full border px-3 py-1.5 text-xs font-medium outline-none transition-colors focus:border-ring",
+                proveedorSel ? "border-primary bg-primary/12 text-primary" : "border-border/70 bg-card/40 text-muted-foreground")}>
+              <option value="">Todos los proveedores</option>
+              {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+            </select>
+          )}
         </div>
+
+        {/* Más vendidos (acceso rápido) */}
+        {sinFiltro && masVendidos.length > 0 && (
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Star className="h-3.5 w-3.5 text-warning" /> Más vendidos
+            </p>
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              {masVendidos.map((p) => {
+                const agotado = estaAgotado(p);
+                return (
+                  <button key={p.id} onClick={() => intentarAgregar(p)} disabled={agotado}
+                    className={cn("group flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-card/50 py-1.5 pl-2 pr-3 text-sm shadow-elev-1 transition-all hover:-translate-y-0.5 hover:shadow-elev-2 disabled:opacity-50",
+                      added?.id === p.id && !reduce && "ring-2 ring-primary")}>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warning/15 text-warning"><Star className="h-3 w-3" /></span>
+                    <span className="whitespace-nowrap font-medium">{p.nombre_comercial}</span>
+                    <span className="tabular whitespace-nowrap text-xs font-semibold text-primary">{formatRD(p.precio_venta)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Grilla de productos */}
         {resultados.length === 0 ? (
@@ -509,8 +550,8 @@ export function POS({
         )}
       </div>
 
-      {/* Derecha: columna fija (desktop) */}
-      <div className="hidden lg:block lg:w-[22rem] lg:shrink-0 xl:w-[24rem]">
+      {/* Derecha: columna fija (desktop), más ancha */}
+      <div className="hidden lg:block lg:w-[25rem] lg:shrink-0 xl:w-[28rem]">
         <div className="sticky top-20 h-[calc(100dvh-7rem)]">{cartPanel}</div>
       </div>
 

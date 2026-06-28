@@ -7,6 +7,7 @@ import { InventarioNav } from "@/components/inventario/inventario-nav";
 import { Filtros } from "@/components/inventario/filtros";
 import { ProductoLista } from "@/components/inventario/producto-lista";
 import { getProductos, getInventoryStats } from "@/lib/data/inventory";
+import { getProveedoresBasico } from "@/lib/data/proveedores";
 import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +27,13 @@ export default async function InventarioPage({
     controlado: Boolean(one(searchParams.controlado)),
     receta: Boolean(one(searchParams.receta)),
     bajoStock: Boolean(one(searchParams.bajo)),
+    proveedor: one(searchParams.proveedor),
   };
 
-  const [productos, stats] = await Promise.all([
+  const [productos, stats, proveedores] = await Promise.all([
     getProductos(filtros),
     getInventoryStats(),
+    getProveedoresBasico(),
   ]);
 
   return (
@@ -54,7 +57,7 @@ export default async function InventarioPage({
       </div>
 
       <Reveal>
-        <Filtros />
+        <Filtros proveedores={proveedores} />
       </Reveal>
 
       <ProductoLista productos={productos} />
