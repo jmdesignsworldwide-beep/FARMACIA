@@ -1,6 +1,7 @@
 import { Brand } from "./brand";
 import { MobileNav } from "./mobile-nav";
 import { UserMenu } from "./user-menu";
+import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { RolBadge } from "@/components/empleados/rol-badge";
 
@@ -34,6 +35,7 @@ export function Header({
         </div>
       </div>
       <div className="flex items-center gap-2.5">
+        <GlobalSearch />
         <ThemeToggle />
         <UserMenu username={username} />
       </div>
