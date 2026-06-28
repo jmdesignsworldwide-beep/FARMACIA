@@ -26,8 +26,10 @@ function revalidarVentas() {
 
 export type CartItemPayload = {
   producto_id: string;
-  cantidad: number;
-  precio_unitario: number;
+  cantidad: number; // cantidad mostrada (cajas o unidades)
+  precio_unitario: number; // precio de esa presentación
+  unidades?: number; // unidades REALES a descontar del stock (default = cantidad)
+  presentacion?: string | null; // etiqueta "Caja (20 u.)" / "Unidad"
   descuento?: number;
 };
 
@@ -67,6 +69,8 @@ export async function registrarVenta(
       producto_id: i.producto_id,
       cantidad: i.cantidad,
       precio_unitario: i.precio_unitario,
+      unidades: i.unidades ?? i.cantidad,
+      presentacion: i.presentacion ?? null,
       descuento: i.descuento ?? 0,
     })),
     p_metodo: payload.metodo,

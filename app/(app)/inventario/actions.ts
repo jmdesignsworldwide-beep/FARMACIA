@@ -38,6 +38,10 @@ function parseProducto(formData: FormData) {
     controlado: formData.get("controlado") === "on",
     requiere_receta: formData.get("requiere_receta") === "on",
     stock_minimo: Math.trunc(num("stock_minimo")),
+    unidades_por_caja: Math.trunc(num("unidades_por_caja")) || 1,
+    vende_caja: formData.get("vende_caja") === "on",
+    precio_caja: num("precio_caja") || 0,
+    vende_unidad: formData.get("vende_unidad") === "on",
   };
 }
 
@@ -50,6 +54,17 @@ function validar(p: ReturnType<typeof parseProducto>): string | null {
     return "El precio de venta no es válido.";
   if (!Number.isFinite(p.stock_minimo) || p.stock_minimo < 0)
     return "El stock mínimo no es válido.";
+  // Presentación: al menos una forma de venta activa y precios coherentes.
+  if (!p.vende_caja && !p.vende_unidad)
+    return "Activa al menos una forma de venta: por caja o detallado.";
+  if (!Number.isInteger(p.unidades_por_caja) || p.unidades_por_caja < 1)
+    return "Las unidades por caja deben ser un número entero ≥ 1.";
+  if (p.vende_caja && p.unidades_por_caja < 2)
+    return "Si se vende por caja, define cuántas unidades trae la caja (≥ 2).";
+  if (p.vende_caja && (!Number.isFinite(p.precio_caja) || p.precio_caja <= 0))
+    return "Indica el precio por caja.";
+  if (p.vende_unidad && p.precio_venta <= 0)
+    return "Indica el precio por unidad (precio de venta).";
   return null;
 }
 

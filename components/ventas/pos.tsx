@@ -19,11 +19,12 @@ import { RecetaModal } from "./receta-modal";
 import { Receipt, type ReciboData } from "./receipt";
 import { registrarVenta } from "@/app/(app)/ventas/actions";
 import { METODOS_PAGO } from "@/lib/data/ventas-shared";
+import { precioModo, unidadesPorModo, modoPorDefecto, presentacionEtiqueta, type ModoVenta } from "@/lib/data/presentacion-shared";
 import { formatRD, cn } from "@/lib/utils";
 import type { ProductoVendible, LoteVendible } from "@/lib/data/ventas-shared";
 import type { ClienteBasico } from "@/lib/data/clientes-shared";
 
-type CartLine = { producto: ProductoVendible; cantidad: number };
+type CartLine = { producto: ProductoVendible; modo: ModoVenta; cantidad: number };
 
 const fmtVenc = (d: string) =>
   new Date(d).toLocaleDateString("es-DO", { month: "short", year: "numeric" });
@@ -85,21 +86,31 @@ export function POS({
   }, [productos, query]);
 
   const cliente = clientes.find((c) => c.id === clienteId) ?? null;
-  const subtotal = cart.reduce((s, l) => s + l.producto.precio_venta * l.cantidad, 0);
+  const subtotal = cart.reduce((s, l) => s + precioModo(l.producto, l.modo) * l.cantidad, 0);
   const total = Math.max(subtotal - descuento, 0);
   const cambio = metodo === "efectivo" ? Math.max(recibido - total, 0) : 0;
 
-  function enCarrito(id: string) {
-    return cart.find((l) => l.producto.id === id)?.cantidad ?? 0;
+  /** Máximo de "piezas" (cajas o unidades) según el stock real en unidades. */
+  function maxPiezas(p: ProductoVendible, modo: ModoVenta) {
+    return Math.floor(p.stock_total / unidadesPorModo(p, modo));
+  }
+
+  function estaAgotado(p: ProductoVendible) {
+    const linea = cart.find((l) => l.producto.id === p.id);
+    if (linea) return linea.cantidad >= maxPiezas(p, linea.modo);
+    const minConsume = p.vende_unidad ? 1 : Math.max(1, p.unidades_por_caja);
+    return p.stock_total < minConsume;
   }
 
   function agregar(p: ProductoVendible) {
     setError(null);
-    if (enCarrito(p.id) >= p.stock_total) return;
     setCart((prev) => {
       const ex = prev.find((l) => l.producto.id === p.id);
-      if (ex) return prev.map((l) => (l.producto.id === p.id ? { ...l, cantidad: l.cantidad + 1 } : l));
-      return [...prev, { producto: p, cantidad: 1 }];
+      if (ex) {
+        if (ex.cantidad >= maxPiezas(p, ex.modo)) return prev;
+        return prev.map((l) => (l.producto.id === p.id ? { ...l, cantidad: l.cantidad + 1 } : l));
+      }
+      return [...prev, { producto: p, modo: modoPorDefecto(p), cantidad: 1 }];
     });
   }
 
@@ -110,10 +121,21 @@ export function POS({
   }
 
   function setCantidad(id: string, cantidad: number) {
-    const prod = cart.find((l) => l.producto.id === id)?.producto;
-    if (!prod) return;
-    const c = Math.max(1, Math.min(cantidad, prod.stock_total));
-    setCart((prev) => prev.map((l) => (l.producto.id === id ? { ...l, cantidad: c } : l)));
+    setCart((prev) => prev.map((l) => {
+      if (l.producto.id !== id) return l;
+      const c = Math.max(1, Math.min(cantidad, Math.max(1, maxPiezas(l.producto, l.modo))));
+      return { ...l, cantidad: c };
+    }));
+  }
+
+  /** Cambia el modo (caja/unidad) de una línea y ajusta la cantidad al stock. */
+  function cambiarModo(id: string, modo: ModoVenta) {
+    setError(null);
+    setCart((prev) => prev.map((l) => {
+      if (l.producto.id !== id) return l;
+      const c = Math.max(1, Math.min(l.cantidad, Math.max(1, maxPiezas(l.producto, modo))));
+      return { ...l, modo, cantidad: c };
+    }));
   }
 
   function quitar(id: string) {
@@ -144,7 +166,9 @@ export function POS({
         items: cart.map((l) => ({
           producto_id: l.producto.id,
           cantidad: l.cantidad,
-          precio_unitario: l.producto.precio_venta,
+          precio_unitario: precioModo(l.producto, l.modo),
+          unidades: l.cantidad * unidadesPorModo(l.producto, l.modo),
+          presentacion: presentacionEtiqueta(l.modo, l.producto.unidades_por_caja),
         })),
         metodo,
         descuento,
@@ -194,7 +218,7 @@ export function POS({
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {resultados.map((p) => {
-            const agotado = enCarrito(p.id) >= p.stock_total;
+            const agotado = estaAgotado(p);
             return (
               <Magnetic key={p.id} strength={0.12}>
                 <button
@@ -269,7 +293,10 @@ export function POS({
           <div className="mt-3 flex-1 min-h-0 space-y-2 overflow-y-auto pr-1">
             <AnimatePresence initial={false}>
               {cart.map((l) => {
-                const used = fefoPreview(l.producto.lotes, l.cantidad);
+                const ambas = l.producto.vende_caja && l.producto.vende_unidad;
+                const precio = precioModo(l.producto, l.modo);
+                const unidades = l.cantidad * unidadesPorModo(l.producto, l.modo);
+                const used = fefoPreview(l.producto.lotes, unidades);
                 return (
                   <motion.div
                     key={l.producto.id}
@@ -282,20 +309,44 @@ export function POS({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{l.producto.nombre_comercial}</p>
-                        <p className="tabular text-xs text-muted-foreground">{formatRD(l.producto.precio_venta)} c/u</p>
+                        <p className="tabular text-xs text-muted-foreground">
+                          {formatRD(precio)} / {l.modo === "caja" ? "caja" : "unidad"}
+                        </p>
                       </div>
                       <button onClick={() => quitar(l.producto.id)} aria-label="Quitar" className="text-muted-foreground hover:text-danger">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
+
+                    {/* Selector caja / detallado (solo si se vende de las dos formas) */}
+                    {ambas ? (
+                      <div className="mt-2 inline-flex rounded-lg border border-border/70 bg-card/40 p-0.5 text-xs">
+                        {(["unidad", "caja"] as ModoVenta[]).map((m) => (
+                          <button key={m} onClick={() => cambiarModo(l.producto.id, m)}
+                            className={cn("rounded-md px-2.5 py-1 font-medium transition-colors",
+                              l.modo === m ? "bg-gradient-to-r from-primary to-accent text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                            {m === "caja" ? "Caja" : "Detallado"}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="mt-2 inline-block rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {l.modo === "caja" ? "Por caja" : "Detallado"}
+                      </span>
+                    )}
+
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <CantidadEditor
                         cantidad={l.cantidad}
-                        stock={l.producto.stock_total}
+                        stock={maxPiezas(l.producto, l.modo)}
                         onChange={(n) => setCantidad(l.producto.id, n)}
                       />
-                      <span className="tabular text-sm font-semibold">{formatRD(l.producto.precio_venta * l.cantidad)}</span>
+                      <span className="tabular text-sm font-semibold">{formatRD(precio * l.cantidad)}</span>
                     </div>
+
+                    {l.modo === "caja" && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">= {unidades} unidades de stock</p>
+                    )}
                     {used[0] && (
                       <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
                         ↳ Sale del lote <span className="font-medium">{used[0].lote.numero_lote}</span> · vence {fmtVenc(used[0].lote.fecha_vencimiento)}

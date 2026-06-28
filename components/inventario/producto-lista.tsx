@@ -64,7 +64,11 @@ export function ProductoLista({ productos }: { productos: ProductoConStock[] }) 
                 <p className="tabular text-xl font-semibold leading-none">
                   <CountUp value={p.stock_total} />
                 </p>
-                <p className="text-[11px] text-muted-foreground">en stock</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {p.vende_caja && p.unidades_por_caja > 1
+                    ? `uds · ${Math.floor(p.stock_total / p.unidades_por_caja)} caja${Math.floor(p.stock_total / p.unidades_por_caja) === 1 ? "" : "s"}`
+                    : "en stock"}
+                </p>
                 <p className="tabular mt-1 text-sm font-medium text-primary">
                   {formatRD(p.precio_venta)}
                 </p>

@@ -95,7 +95,10 @@ export default async function ProductoDetallePage({
               <Dato label="Categoría" value={p.categoria} />
               <Dato label="Código de barras" value={p.codigo_barras ?? "—"} mono />
               <Dato label="Precio costo" value={formatRD(p.precio_costo)} />
-              <Dato label="Precio venta" value={formatRD(p.precio_venta)} />
+              <Dato label={p.vende_caja ? "Precio por unidad" : "Precio venta"} value={p.vende_unidad ? formatRD(p.precio_venta) : "—"} />
+              {p.vende_caja && (
+                <Dato label={`Precio por caja (${p.unidades_por_caja} u.)`} value={formatRD(p.precio_caja)} />
+              )}
               <Dato label="Margen" value={`${p.margen_pct}%`} accent />
             </dl>
           </div>
@@ -105,8 +108,14 @@ export default async function ProductoDetallePage({
               <CountUp value={p.stock_total} />
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              en {p.lotes_count} {p.lotes_count === 1 ? "lote" : "lotes"} · mínimo {p.stock_minimo}
+              unidades · en {p.lotes_count} {p.lotes_count === 1 ? "lote" : "lotes"} · mínimo {p.stock_minimo}
             </p>
+            {p.vende_caja && p.unidades_por_caja > 1 && (
+              <p className="mt-1 text-xs font-medium text-primary">
+                {Math.floor(p.stock_total / p.unidades_por_caja)} caja{Math.floor(p.stock_total / p.unidades_por_caja) === 1 ? "" : "s"} de {p.unidades_por_caja}
+                {p.stock_total % p.unidades_por_caja > 0 ? ` + ${p.stock_total % p.unidades_por_caja} sueltas` : ""}
+              </p>
+            )}
           </div>
         </div>
       </Reveal>

@@ -20,6 +20,10 @@ export type ProductoVendible = {
   controlado: boolean;
   requiere_receta: boolean;
   stock_total: number;
+  unidades_por_caja: number;
+  vende_caja: boolean;
+  precio_caja: number;
+  vende_unidad: boolean;
   lotes: LoteVendible[];
 };
 
@@ -65,6 +69,7 @@ export type VentaItem = {
   precio_unitario: number;
   descuento: number;
   subtotal: number;
+  presentacion: string | null;
   lotes_usados: LoteUsado[];
 };
 

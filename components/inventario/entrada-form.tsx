@@ -17,6 +17,7 @@ type ProductoOpcion = {
   nombre_generico: string;
   presentacion: string | null;
   codigo_barras: string | null;
+  unidades_por_caja: number;
 };
 
 function SubmitButton() {
@@ -45,7 +46,13 @@ export function EntradaForm({
   const [proveedorId, setProveedorId] = useState("");
   const [productoId, setProductoId] = useState(defaultProductoId ?? "");
   const [noEncontrado, setNoEncontrado] = useState<string | null>(null);
+  const [cant, setCant] = useState<number>(0);
+  const [entradaModo, setEntradaModo] = useState<"unidad" | "caja">("unidad");
   const proveedorNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? "";
+
+  const upc = productos.find((p) => p.id === productoId)?.unidades_por_caja ?? 1;
+  const porCaja = entradaModo === "caja" && upc > 1;
+  const unidadesTotales = porCaja ? cant * upc : cant;
 
   function onScan(codigo: string) {
     const prod = productos.find((p) => p.codigo_barras === codigo);
@@ -86,8 +93,22 @@ export function EntradaForm({
           <Field label="Número de lote" required>
             <Input name="numero_lote" placeholder="Ej. A-2291" required />
           </Field>
-          <Field label="Cantidad" required>
-            <Input name="cantidad" type="number" min="1" step="1" placeholder="Ej. 50" required />
+          <Field label={porCaja ? "Cantidad (cajas)" : "Cantidad (unidades)"} required>
+            {/* Lo que se guarda en el stock siempre es en UNIDADES. */}
+            <input type="hidden" name="cantidad" value={unidadesTotales || ""} />
+            <div className="flex gap-2">
+              <Input type="number" min="1" step="1" required placeholder="Ej. 50" value={cant || ""}
+                onChange={(e) => setCant(Math.max(0, Math.trunc(Number(e.target.value)) || 0))} className="flex-1" />
+              {upc > 1 && (
+                <Select value={entradaModo} onChange={(e) => setEntradaModo(e.target.value as "unidad" | "caja")} className="w-32">
+                  <option value="unidad">Unidades</option>
+                  <option value="caja">Cajas</option>
+                </Select>
+              )}
+            </div>
+            {porCaja && cant > 0 && (
+              <p className="mt-1 text-[11px] text-primary">= {unidadesTotales} unidades al stock ({cant} × {upc})</p>
+            )}
           </Field>
           <Field label="Fecha de vencimiento" required>
             <Input name="fecha_vencimiento" type="date" required />
