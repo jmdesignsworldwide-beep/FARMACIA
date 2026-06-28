@@ -73,7 +73,10 @@ export default async function VentaDetallePage({ params }: { params: { id: strin
             {items.map((it) => (
               <div key={it.id} className="border-b border-border/40 pb-3 last:border-0 last:pb-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium">{it.cantidad}× {it.nombre_producto}</span>
+                  <span className="text-sm font-medium">
+                    {it.cantidad}× {it.nombre_producto}
+                    {it.presentacion && <span className="ml-1 text-[11px] font-normal text-muted-foreground">· {it.presentacion}</span>}
+                  </span>
                   <span className="tabular text-sm font-semibold">{formatRD(it.subtotal)}</span>
                 </div>
                 <p className="tabular text-xs text-muted-foreground">{formatRD(it.precio_unitario)} c/u</p>

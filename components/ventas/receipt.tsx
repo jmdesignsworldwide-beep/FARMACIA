@@ -47,6 +47,7 @@ export function Receipt({
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate font-medium">
                     {it.cantidad}× {it.nombre_producto}
+                    {it.presentacion && <span className="ml-1 text-[11px] font-normal text-muted-foreground">· {it.presentacion}</span>}
                   </span>
                   <span className="tabular shrink-0">{formatRD(it.subtotal)}</span>
                 </div>

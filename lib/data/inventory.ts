@@ -19,6 +19,10 @@ export type Producto = {
   controlado: boolean;
   requiere_receta: boolean;
   stock_minimo: number;
+  unidades_por_caja: number;
+  vende_caja: boolean;
+  precio_caja: number;
+  vende_unidad: boolean;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -114,13 +118,13 @@ export async function getProductoDetalle(id: string): Promise<{
 
 /** Lista corta para selectores (entrada de mercancía). */
 export async function getProductosBasico(): Promise<
-  Pick<Producto, "id" | "nombre_comercial" | "nombre_generico" | "presentacion" | "codigo_barras">[]
+  Pick<Producto, "id" | "nombre_comercial" | "nombre_generico" | "presentacion" | "codigo_barras" | "unidades_por_caja">[]
 > {
   if (!isSupabaseConfigured()) return [];
   const supabase = createClient();
   const { data } = await supabase
     .from("productos")
-    .select("id, nombre_comercial, nombre_generico, presentacion, codigo_barras")
+    .select("id, nombre_comercial, nombre_generico, presentacion, codigo_barras, unidades_por_caja")
     .eq("activo", true)
     .order("nombre_comercial");
   return data ?? [];
