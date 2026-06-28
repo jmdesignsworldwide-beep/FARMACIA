@@ -53,10 +53,14 @@ export function POS({
   productos,
   clientes,
   cajaAbierta,
+  farmacia,
+  empleado,
 }: {
   productos: ProductoVendible[];
   clientes: ClienteBasico[];
   cajaAbierta: boolean;
+  farmacia: string;
+  empleado: string;
 }) {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -184,9 +188,15 @@ export function POS({
       }
       setRecibo({
         folio: res.folio!,
+        fecha: new Date().toISOString(),
+        farmacia,
+        empleado,
+        metodo,
+        subtotal,
+        descuento,
         total: res.total!,
         cambio: res.cambio!,
-        metodo,
+        clienteNombre: cliente?.nombre ?? null,
         items: res.items ?? [],
       });
       limpiar();

@@ -3,16 +3,18 @@ import { VentasNav } from "@/components/ventas/ventas-nav";
 import { POS } from "@/components/ventas/pos";
 import { getProductosVendibles, getCajaActual } from "@/lib/data/ventas";
 import { getClientesBasico } from "@/lib/data/clientes";
+import { getConfig } from "@/lib/data/config";
 import { requireCapability } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function VentasPage() {
-  await requireCapability("usar_pos");
-  const [productos, caja, clientes] = await Promise.all([
+  const emp = await requireCapability("usar_pos");
+  const [productos, caja, clientes, config] = await Promise.all([
     getProductosVendibles(),
     getCajaActual(),
     getClientesBasico(),
+    getConfig(),
   ]);
 
   return (
@@ -27,7 +29,8 @@ export default async function VentasPage() {
         </div>
       </Reveal>
 
-      <POS productos={productos} clientes={clientes} cajaAbierta={Boolean(caja)} />
+      <POS productos={productos} clientes={clientes} cajaAbierta={Boolean(caja)}
+        farmacia={config.nombre_farmacia} empleado={emp.full_name ?? emp.username} />
     </div>
   );
 }
