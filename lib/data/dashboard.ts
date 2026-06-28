@@ -31,7 +31,7 @@ export type DashboardData = {
   esDemo: boolean; // true si el flujo del día (ventas/caja) viene de muestra
   salesToday: { amount: number; transactions: number };
   cashOnHand: { amount: number };
-  expiring: { within30: number; within60: number; within90: number };
+  expiring: { within7: number; within30: number; within60: number; within90: number };
   lowStock: { count: number };
   attention: AttentionItem[];
   daySummary: {
@@ -99,6 +99,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     (p) => p.stock_total <= Math.max(p.stock_minimo, config.stock_minimo_default),
   );
   const ventana = config.dias_alerta_vencimiento;
+  const within7 = lotes.filter((l) => l.dias_para_vencer <= 7).length;
   const within30 = lotes.filter((l) => l.dias_para_vencer <= ventana).length;
   const within60 = lotes.filter((l) => l.dias_para_vencer <= 60).length;
   const within90 = lotes.length;
@@ -131,7 +132,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             : { name: "—", units: 0 },
           ticketAverage: ventasHoy.ticketPromedio,
         },
-    expiring: { within30, within60, within90 },
+    expiring: { within7, within30, within60, within90 },
     lowStock: { count: bajoStock.length },
     attention: buildAttention(lotes, bajoStock, ventana),
   };
