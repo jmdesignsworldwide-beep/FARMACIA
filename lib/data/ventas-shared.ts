@@ -20,6 +20,7 @@ export type ProductoVendible = {
   controlado: boolean;
   requiere_receta: boolean;
   stock_total: number;
+  stock_minimo: number;
   unidades_por_caja: number;
   vende_caja: boolean;
   precio_caja: number;
