@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -234,7 +234,7 @@ export function POS({
 
       {/* Carrito */}
       <div className="lg:col-span-2">
-        <div className="glass sticky top-20 flex max-h-[calc(100dvh-6rem)] flex-col rounded-2xl p-4 shadow-elev-2">
+        <div className="glass sticky top-20 flex max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-2xl p-4 shadow-elev-2">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
               <ShoppingCart className="h-4 w-4" /> Venta actual
@@ -266,7 +266,7 @@ export function POS({
             )}
           </div>
 
-          <div className="mt-3 flex-1 space-y-2 overflow-y-auto">
+          <div className="mt-3 flex-1 min-h-0 space-y-2 overflow-y-auto pr-1">
             <AnimatePresence initial={false}>
               {cart.map((l) => {
                 const used = fefoPreview(l.producto.lotes, l.cantidad);
@@ -289,11 +289,11 @@ export function POS({
                       </button>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Stepper onClick={() => setCantidad(l.producto.id, l.cantidad - 1)}><Minus className="h-3.5 w-3.5" /></Stepper>
-                        <span className="tabular w-7 text-center text-sm font-semibold">{l.cantidad}</span>
-                        <Stepper onClick={() => setCantidad(l.producto.id, l.cantidad + 1)} disabled={l.cantidad >= l.producto.stock_total}><Plus className="h-3.5 w-3.5" /></Stepper>
-                      </div>
+                      <CantidadEditor
+                        cantidad={l.cantidad}
+                        stock={l.producto.stock_total}
+                        onChange={(n) => setCantidad(l.producto.id, n)}
+                      />
                       <span className="tabular text-sm font-semibold">{formatRD(l.producto.precio_venta * l.cantidad)}</span>
                     </div>
                     {used[0] && (
@@ -311,9 +311,9 @@ export function POS({
             )}
           </div>
 
-          {/* Totales y pago */}
+          {/* Totales y pago — pie fijo, siempre visible */}
           {cart.length > 0 && (
-            <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+            <div className="mt-3 shrink-0 space-y-3 border-t border-border/60 pt-3">
               <div className="flex items-center gap-2">
                 <label className="text-xs text-muted-foreground">Descuento</label>
                 <Input type="number" min="0" step="0.01" value={descuento || ""} onChange={(e) => setDescuento(Math.max(0, Number(e.target.value) || 0))} className="h-9 w-28 py-1.5" placeholder="RD$ 0.00" />
@@ -394,6 +394,54 @@ export function POS({
         onCancel={() => setPendienteReceta(null)}
       />
       <Receipt data={recibo} onClose={() => setRecibo(null)} />
+    </div>
+  );
+}
+
+/** Cantidad editable: − [campo tecleable] +, sincronizados y validados contra el stock. */
+function CantidadEditor({ cantidad, stock, onChange }: { cantidad: number; stock: number; onChange: (n: number) => void }) {
+  const [text, setText] = useState(String(cantidad));
+  const [aviso, setAviso] = useState(false);
+
+  // Mantiene el campo en sincronía cuando la cantidad cambia desde los botones.
+  useEffect(() => setText(String(cantidad)), [cantidad]);
+
+  // Oculta el aviso de stock tras un momento.
+  useEffect(() => {
+    if (!aviso) return;
+    const t = window.setTimeout(() => setAviso(false), 2500);
+    return () => window.clearTimeout(t);
+  }, [aviso]);
+
+  function escribir(raw: string) {
+    const limpio = raw.replace(/[^0-9]/g, "");
+    setText(limpio);
+    if (limpio === "") return; // permite borrar para reescribir; se corrige al salir
+    const n = parseInt(limpio, 10);
+    if (n > stock) {
+      setAviso(true);
+      onChange(stock);
+    } else {
+      onChange(Math.max(1, n));
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <Stepper onClick={() => onChange(cantidad - 1)} disabled={cantidad <= 1}><Minus className="h-3.5 w-3.5" /></Stepper>
+        <input
+          value={text}
+          inputMode="numeric"
+          aria-label="Cantidad"
+          onChange={(e) => escribir(e.target.value)}
+          onBlur={() => { if (text === "" || parseInt(text, 10) < 1) { setText("1"); onChange(1); } }}
+          onFocus={(e) => e.currentTarget.select()}
+          className="tabular h-7 w-11 rounded-lg border border-border bg-card/50 text-center text-sm font-semibold outline-none transition-colors focus:border-ring focus:shadow-glow"
+        />
+        <Stepper onClick={() => onChange(cantidad + 1)} disabled={cantidad >= stock}><Plus className="h-3.5 w-3.5" /></Stepper>
+      </div>
+      {aviso && <p className="mt-1 text-[10px] font-medium text-warning">Solo quedan {stock} {stock === 1 ? "unidad" : "unidades"}.</p>}
     </div>
   );
 }
