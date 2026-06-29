@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Info, ExternalLink } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { whatsappLink, telefonoWhatsapp } from "@/lib/utils";
 
 type ProvNotif = { id: string; nombre: string; telefono: string | null };
@@ -61,9 +62,9 @@ export function AvisarProveedor({
         {proveedores.length > 1 && (
           <label className="mt-4 block">
             <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Proveedor</span>
-            <select value={sel} onChange={(e) => setSel(e.target.value)} className="w-full rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring">
+            <Select value={sel} onChange={(e) => setSel(e.target.value)}>
               {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </select>
+            </Select>
           </label>
         )}
 

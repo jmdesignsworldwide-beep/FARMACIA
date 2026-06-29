@@ -6,14 +6,14 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Search, ScanLine, Plus, Minus, Trash2, ShoppingCart, Banknote,
-  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, ChevronDown, Star, Contact, Truck,
+  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, ChevronDown, Star, Contact,
 } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { CountUp } from "@/components/motion/count-up";
 import { PulseDot } from "@/components/motion/pulse-dot";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
 import { FitText } from "@/components/ui/fit-text";
 import { Autocomplete } from "@/components/ui/autocomplete";
 import { crearClienteRapido } from "@/app/(app)/clientes/actions";
@@ -474,17 +474,16 @@ export function POS({
           {proveedores.length > 0 && (
             <>
               <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border/60 sm:block" aria-hidden />
-              <div className={cn("relative inline-flex items-center rounded-full border text-xs font-medium transition-colors focus-within:border-ring",
-                proveedorSel ? "border-primary bg-primary/12 text-primary" : "border-border/70 bg-card/40 text-muted-foreground")}>
-                <Truck className="pointer-events-none absolute left-2.5 h-3.5 w-3.5" />
-                <select value={proveedorSel} onChange={(e) => setProveedorSel(e.target.value)}
-                  aria-label="Filtrar por proveedor"
-                  className="appearance-none rounded-full bg-transparent py-1.5 pl-7 pr-7 font-medium outline-none">
-                  <option value="">Todos los proveedores</option>
-                  {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5" />
-              </div>
+              <Select
+                aria-label="Filtrar por proveedor"
+                value={proveedorSel}
+                onChange={(e) => setProveedorSel(e.target.value)}
+                className={cn("w-auto min-w-[11rem] rounded-full px-3 py-1.5 text-xs font-medium",
+                  proveedorSel ? "border-primary bg-primary/12 text-primary" : "border-border/70 bg-card/40 text-muted-foreground")}
+              >
+                <option value="">Todos los proveedores</option>
+                {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              </Select>
             </>
           )}
         </div>

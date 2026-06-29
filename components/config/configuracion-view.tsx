@@ -10,7 +10,7 @@ import {
   ImagePlus, ShieldCheck, LogOut, Save,
 } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
-import { Field, Input, Toggle } from "@/components/ui/field";
+import { Field, Input, Select, Toggle } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/(app)/actions";
 import {
@@ -210,14 +210,14 @@ function Navegable() {
       <Section icon={Printer} title="Impresora de recibos" desc="Configuración de impresión.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Impresora">
-            <select className="w-full rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring">
+            <Select>
               <option>EPSON TM-T20 (térmica 80mm)</option><option>Star TSP143</option><option>Genérica 58mm</option>
-            </select>
+            </Select>
           </Field>
           <Field label="Ancho de papel">
-            <select className="w-full rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring">
+            <Select>
               <option>80 mm</option><option>58 mm</option>
-            </select>
+            </Select>
           </Field>
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">Configuración de demostración.</p>
