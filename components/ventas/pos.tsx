@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Search, ScanLine, Plus, Minus, Trash2, ShoppingCart, Banknote,
-  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, Star, Contact,
+  CreditCard, ArrowLeftRight, Loader2, Info, LockKeyhole, X, Check, ChevronUp, ChevronDown, Star, Contact, Truck,
 } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Stagger, StaggerItem } from "@/components/motion/stagger";
@@ -92,9 +92,19 @@ export function POS({
   const [added, setAdded] = useState<{ id: string; n: number } | null>(null);
   const [mobileCart, setMobileCart] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [masOpen, setMasOpen] = useState(true);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => setMounted(true), []);
+
+  // Recuerda si "Más vendidos" quedó abierto/cerrado durante la sesión.
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("pos-mas-vendidos-open");
+    if (saved !== null) setMasOpen(saved === "1");
+  }, []);
+  useEffect(() => {
+    window.sessionStorage.setItem("pos-mas-vendidos-open", masOpen ? "1" : "0");
+  }, [masOpen]);
 
   // Limpia el destello "agregado" tras la micro-interacción.
   useEffect(() => {
@@ -455,42 +465,72 @@ export function POS({
           <ScanButton onDetected={(c) => setQuery(c)} label="" />
         </div>
 
-        {/* Chips de categoría + filtro por proveedor */}
+        {/* Chips de categoría + filtro por proveedor (misma fila, alineados) */}
         <div className="flex flex-wrap items-center gap-2">
           <Chip active={categoria === ""} onClick={() => setCategoria("")}>Todos</Chip>
           {categorias.map((c) => (
             <Chip key={c} active={categoria === c} onClick={() => setCategoria(categoria === c ? "" : c)}>{c}</Chip>
           ))}
           {proveedores.length > 0 && (
-            <select value={proveedorSel} onChange={(e) => setProveedorSel(e.target.value)}
-              className={cn("ml-auto rounded-full border px-3 py-1.5 text-xs font-medium outline-none transition-colors focus:border-ring",
+            <>
+              <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border/60 sm:block" aria-hidden />
+              <div className={cn("relative inline-flex items-center rounded-full border text-xs font-medium transition-colors focus-within:border-ring",
                 proveedorSel ? "border-primary bg-primary/12 text-primary" : "border-border/70 bg-card/40 text-muted-foreground")}>
-              <option value="">Todos los proveedores</option>
-              {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </select>
+                <Truck className="pointer-events-none absolute left-2.5 h-3.5 w-3.5" />
+                <select value={proveedorSel} onChange={(e) => setProveedorSel(e.target.value)}
+                  aria-label="Filtrar por proveedor"
+                  className="appearance-none rounded-full bg-transparent py-1.5 pl-7 pr-7 font-medium outline-none">
+                  <option value="">Todos los proveedores</option>
+                  {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5" />
+              </div>
+            </>
           )}
         </div>
 
-        {/* Más vendidos (acceso rápido) */}
+        {/* Más vendidos (desplegable: todos visibles, sin scroll horizontal) */}
         {sinFiltro && masVendidos.length > 0 && (
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Star className="h-3.5 w-3.5 text-warning" /> Más vendidos
-            </p>
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-              {masVendidos.map((p) => {
-                const agotado = estaAgotado(p);
-                return (
-                  <button key={p.id} onClick={() => intentarAgregar(p)} disabled={agotado}
-                    className={cn("group flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-card/50 py-1.5 pl-2 pr-3 text-sm shadow-elev-1 transition-all hover:-translate-y-0.5 hover:shadow-elev-2 disabled:opacity-50",
-                      added?.id === p.id && !reduce && "ring-2 ring-primary")}>
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warning/15 text-warning"><Star className="h-3 w-3" /></span>
-                    <span className="whitespace-nowrap font-medium">{p.nombre_comercial}</span>
-                    <span className="tabular whitespace-nowrap text-xs font-semibold text-primary">{formatRD(p.precio_venta)}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/30">
+            <button
+              type="button"
+              onClick={() => setMasOpen((v) => !v)}
+              aria-expanded={masOpen}
+              className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted/40"
+            >
+              <span className="flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 text-warning" /> Más vendidos
+                <span className="tabular rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">{masVendidos.length}</span>
+              </span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", masOpen && "rotate-180")} />
+            </button>
+            <AnimatePresence initial={false}>
+              {masOpen && (
+                <motion.div
+                  key="mas-vendidos"
+                  initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                  exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex flex-wrap gap-2 px-3 pb-3 pt-0.5">
+                    {masVendidos.map((p) => {
+                      const agotado = estaAgotado(p);
+                      return (
+                        <button key={p.id} onClick={() => intentarAgregar(p)} disabled={agotado}
+                          className={cn("group flex items-center gap-2 rounded-full border border-border/70 bg-card/50 py-1.5 pl-2 pr-3 text-sm shadow-elev-1 transition-all hover:-translate-y-0.5 hover:shadow-elev-2 disabled:opacity-50",
+                            added?.id === p.id && !reduce && "ring-2 ring-primary")}>
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warning/15 text-warning"><Star className="h-3 w-3" /></span>
+                          <span className="whitespace-nowrap font-medium">{p.nombre_comercial}</span>
+                          <span className="tabular whitespace-nowrap text-xs font-semibold text-primary">{formatRD(p.precio_venta)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
