@@ -37,15 +37,9 @@ export const Input = forwardRef<
 ));
 Input.displayName = "Input";
 
-export const Select = forwardRef<
-  HTMLSelectElement,
-  React.SelectHTMLAttributes<HTMLSelectElement>
->(({ className, children, ...props }, ref) => (
-  <select ref={ref} className={cn(baseField, "appearance-none pr-9", className)} {...props}>
-    {children}
-  </select>
-));
-Select.displayName = "Select";
+/** Dropdown premium reutilizable (estilo de marca, ambos temas). Re-exportado
+ *  desde aquí para mantener `import { Select } from "@/components/ui/field"`. */
+export { Select } from "./select";
 
 /** Interruptor estilo toggle para flags booleanos (controlado / receta). */
 export function Toggle({

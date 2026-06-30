@@ -13,6 +13,7 @@ import { PulseDot } from "@/components/motion/pulse-dot";
 import { Reveal } from "@/components/motion/reveal";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { VencimientoBadge } from "@/components/inventario/badges";
 import {
@@ -51,11 +52,11 @@ export function ReportesView({ data }: { data: ReportesData }) {
                 </Link>
               ))}
             </div>
-            <select value={empleadoSel} onChange={(e) => setEmpleadoSel(e.target.value)}
-              className="rounded-xl border border-input bg-card/50 px-3 py-2 text-sm outline-none focus:border-ring">
+            <Select value={empleadoSel} onChange={(e) => setEmpleadoSel(e.target.value)}
+              className="w-auto min-w-[12rem]">
               <option value="">Todos los empleados</option>
               {empleados.map((e) => <option key={e} value={e}>{e}</option>)}
-            </select>
+            </Select>
           </div>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4" /> Exportar / imprimir</Button>
         </div>

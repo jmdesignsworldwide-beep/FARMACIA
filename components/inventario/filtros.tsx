@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
 import { CATEGORIAS } from "@/lib/data/categorias";
+import { Select } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 const CHIPS = [
@@ -69,28 +70,28 @@ export function Filtros({ proveedores = [] }: { proveedores?: { id: string; nomb
           )}
         </div>
 
-        <select
+        <Select
           value={params.get("categoria") ?? ""}
           onChange={(e) => update("categoria", e.target.value || null)}
-          className="rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring sm:w-52"
+          className="sm:w-52"
         >
           <option value="">Todas las categorías</option>
           {CATEGORIAS.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
-        </select>
+        </Select>
 
         {proveedores.length > 0 && (
-          <select
+          <Select
             value={params.get("proveedor") ?? ""}
             onChange={(e) => update("proveedor", e.target.value || null)}
-            className="rounded-xl border border-input bg-card/50 px-3.5 py-2.5 text-sm outline-none focus:border-ring sm:w-52"
+            className="sm:w-52"
           >
             <option value="">Todos los proveedores</option>
             {proveedores.map((p) => (
               <option key={p.id} value={p.id}>{p.nombre}</option>
             ))}
-          </select>
+          </Select>
         )}
       </div>
 
