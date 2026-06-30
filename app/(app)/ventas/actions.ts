@@ -48,6 +48,9 @@ export type VentaResultado = {
   ok: boolean;
   error?: string;
   folio?: number;
+  subtotal?: number;
+  descuento?: number;
+  itbis?: number;
   total?: number;
   cambio?: number;
   items?: VentaItem[];
@@ -88,7 +91,10 @@ export async function registrarVenta(
     return { ok: false, error: "No se pudo completar la venta." };
   }
 
-  const res = data as { venta_id: string; folio: number; total: number; cambio: number };
+  const res = data as {
+    venta_id: string; folio: number;
+    subtotal: number; descuento: number; itbis: number; total: number; cambio: number;
+  };
 
   // Asociar el cliente a la venta (fuente única para su historial de compras).
   if (payload.clienteId) {
@@ -104,6 +110,9 @@ export async function registrarVenta(
   return {
     ok: true,
     folio: res.folio,
+    subtotal: Number(res.subtotal),
+    descuento: Number(res.descuento),
+    itbis: Number(res.itbis),
     total: Number(res.total),
     cambio: Number(res.cambio),
     items: detalle?.items ?? [],

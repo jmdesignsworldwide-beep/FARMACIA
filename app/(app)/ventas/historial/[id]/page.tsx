@@ -99,6 +99,7 @@ export default async function VentaDetallePage({ params }: { params: { id: strin
             <dl className="space-y-2 text-sm">
               <Row label="Subtotal" value={formatRD(v.subtotal)} />
               {v.descuento > 0 && <Row label="Descuento" value={`− ${formatRD(v.descuento)}`} />}
+              <Row label="ITBIS (18%)" value={v.itbis > 0 ? formatRD(v.itbis) : "Exento"} />
               <Row label="Total" value={formatRD(v.total)} strong />
               <Row label="Método" value={metodoLabel(v.metodo_pago)} />
               {v.metodo_pago === "efectivo" && v.monto_recibido != null && (

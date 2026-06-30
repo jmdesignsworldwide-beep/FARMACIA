@@ -180,6 +180,9 @@ export function ProductoForm({
             description="Requiere control especial" defaultChecked={producto?.controlado} />
           <Toggle name="requiere_receta" tone="accent" label="Requiere receta médica"
             description="No se vende sin receta" defaultChecked={producto?.requiere_receta} />
+          <Toggle name="itbis_gravado" tone="primary" label="Gravado con ITBIS (18%)"
+            description="Actívalo para no-medicamentos. Los medicamentos suelen ir exentos."
+            defaultChecked={producto?.itbis_gravado} />
           <Field label="Stock mínimo (umbral de alerta)" required className="sm:col-span-2 sm:max-w-xs">
             <Input name="stock_minimo" type="number" min="0" step="1" required
               defaultValue={producto?.stock_minimo ?? 0} />

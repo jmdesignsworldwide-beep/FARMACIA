@@ -1,5 +1,20 @@
-import { ShieldAlert, FileText, AlertTriangle } from "lucide-react";
+import { ShieldAlert, FileText, AlertTriangle, Receipt, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/** Distintivo de tratamiento de ITBIS: gravado 18% o exento. */
+export function ItbisBadge({ gravado, className }: { gravado: boolean; className?: string }) {
+  return gravado ? (
+    <span className={cn("inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary", className)}>
+      <Receipt className="h-3 w-3" />
+      ITBIS 18%
+    </span>
+  ) : (
+    <span className={cn("inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground", className)}>
+      <BadgeCheck className="h-3 w-3" />
+      Exento de ITBIS
+    </span>
+  );
+}
 
 /** Distintivo premium para medicamentos controlados. */
 export function ControladoBadge({ className }: { className?: string }) {

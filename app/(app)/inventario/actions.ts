@@ -37,6 +37,7 @@ function parseProducto(formData: FormData) {
     precio_venta: num("precio_venta"),
     controlado: formData.get("controlado") === "on",
     requiere_receta: formData.get("requiere_receta") === "on",
+    itbis_gravado: formData.get("itbis_gravado") === "on",
     stock_minimo: Math.trunc(num("stock_minimo")),
     unidades_por_caja: Math.trunc(num("unidades_por_caja")) || 1,
     vende_caja: formData.get("vende_caja") === "on",

@@ -131,8 +131,8 @@ export async function getFinanzas(
     { data: ventasMes },
     cajaActual,
   ] = await Promise.all([
-    supabase.from("ventas").select("id, folio, total, metodo_pago, created_at").eq("estado", "completada").gte("created_at", ISO(desde)).lte("created_at", ISO(hasta)),
-    supabase.from("ventas").select("total").eq("estado", "completada").gte("created_at", ISO(prevDesde)).lte("created_at", ISO(prevHasta)),
+    supabase.from("ventas").select("id, folio, total, itbis, metodo_pago, created_at").eq("estado", "completada").gte("created_at", ISO(desde)).lte("created_at", ISO(hasta)),
+    supabase.from("ventas").select("total, itbis").eq("estado", "completada").gte("created_at", ISO(prevDesde)).lte("created_at", ISO(prevHasta)),
     supabase.from("productos").select("id, nombre_comercial, precio_costo, precio_venta, margen_pct").eq("activo", true),
     supabase.from("lotes").select("producto_id, cantidad").gt("cantidad", 0),
     supabase.from("lotes").select("producto_id, cantidad, fecha_entrada").gte("fecha_entrada", YMD(desde)).lte("fecha_entrada", YMD(hasta)),
@@ -142,7 +142,7 @@ export async function getFinanzas(
     supabase.from("caja_egresos").select("monto").gte("created_at", ISO(prevDesde)).lte("created_at", ISO(prevHasta)),
     supabase.from("lotes").select("producto_id, cantidad").gte("fecha_entrada", YMD(prevDesde)).lte("fecha_entrada", YMD(prevHasta)),
     supabase.from("venta_items").select("producto_id, cantidad, ventas!inner(created_at, estado)").eq("ventas.estado", "completada").gte("ventas.created_at", ISO(prevDesde)).lte("ventas.created_at", ISO(prevHasta)),
-    supabase.from("ventas").select("total").eq("estado", "completada").gte("created_at", ISO(inicioMes)),
+    supabase.from("ventas").select("total, itbis").eq("estado", "completada").gte("created_at", ISO(inicioMes)),
     getCajaActual(),
   ]);
 
@@ -194,7 +194,13 @@ export async function getFinanzas(
   base.menosRentables = menosRentables;
 
   // ── ¿Hay suficientes ventas reales para el FLUJO? ──
-  const v = ventas ?? [];
+  // El ITBIS NO es ingreso: es un impuesto que se cobra y se debe. Para ganancia,
+  // margen y flujo usamos el ingreso NETO de ITBIS (total − itbis). El efectivo de
+  // caja sí usa el total bruto (lo que el cliente paga) — eso vive en getCajaResumen.
+  const v = (ventas ?? []).map((x: any) => ({
+    ...x,
+    total: Number(x.total) - Number(x.itbis ?? 0),
+  }));
   if (v.length < MIN_REAL) {
     return demoMuestra();
   }
@@ -216,7 +222,7 @@ export async function getFinanzas(
   const margenPct = entro > 0 ? Math.round((ganancia / entro) * 100) : 0;
 
   // Período anterior (real): ingresos, COGS, ganancia y margen para tendencias.
-  const prevIngresos = (prevVentas ?? []).reduce((s, x) => s + Number(x.total), 0);
+  const prevIngresos = (prevVentas ?? []).reduce((s, x: any) => s + (Number(x.total) - Number(x.itbis ?? 0)), 0);
   let prevCogs = 0;
   for (const it of prevItems ?? []) if (it.producto_id) prevCogs += Number(it.cantidad) * (costo.get(it.producto_id) ?? 0);
   const gananciaPrev = Math.round(Math.max(prevIngresos - prevCogs, 0));
@@ -268,7 +274,7 @@ export async function getFinanzas(
   };
 
   // Proyección de cierre de mes (calendario) al ritmo actual.
-  const ventasMesTotal = (ventasMes ?? []).reduce((s, x) => s + Number(x.total), 0);
+  const ventasMesTotal = (ventasMes ?? []).reduce((s, x: any) => s + (Number(x.total) - Number(x.itbis ?? 0)), 0);
   const hoy = new Date();
   const diaDelMes = hoy.getDate();
   const diasMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
