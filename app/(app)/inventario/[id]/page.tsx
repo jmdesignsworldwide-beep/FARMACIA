@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { CountUp } from "@/components/motion/count-up";
-import { ControladoBadge, RecetaBadge, BajoStockBadge } from "@/components/inventario/badges";
+import { ControladoBadge, RecetaBadge, BajoStockBadge, ItbisBadge } from "@/components/inventario/badges";
 import { LotesTabla } from "@/components/inventario/lotes-tabla";
 import { Button } from "@/components/ui/button";
 import { getProductoDetalle } from "@/lib/data/inventory";
@@ -49,6 +49,7 @@ export default async function ProductoDetallePage({
               {p.controlado && <ControladoBadge />}
               {p.requiere_receta && <RecetaBadge />}
               {p.bajo_stock && <BajoStockBadge />}
+              <ItbisBadge gravado={p.itbis_gravado} />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {p.nombre_generico}

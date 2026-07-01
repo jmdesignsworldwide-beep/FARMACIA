@@ -14,6 +14,7 @@ export type ReciboData = {
   metodo: string;
   subtotal: number;
   descuento: number;
+  itbis: number;
   total: number;
   cambio: number;
   clienteNombre: string | null;
@@ -37,12 +38,13 @@ function reciboTexto(d: ReciboData): string {
     "────────────────────",
     `Subtotal: ${formatRD(d.subtotal)}`,
     d.descuento > 0 ? `Descuento: -${formatRD(d.descuento)}` : "",
+    `ITBIS (18%): ${d.itbis > 0 ? formatRD(d.itbis) : "Exento"}`,
     `*TOTAL: ${formatRD(d.total)}*`,
     `Pago: ${metodoLabel(d.metodo)}`,
     d.metodo === "efectivo" ? `Cambio: ${formatRD(d.cambio)}` : "",
     d.empleado ? `Atendió: ${d.empleado}` : "",
     "",
-    "Documento de ejemplo (demostración). NCF simulado, no certificado ante la DGII.",
+    "Documento de ejemplo (demostración). ITBIS y NCF simulados, no certificado ante la DGII.",
   ];
   return L.filter(Boolean).join("\n");
 }
@@ -77,10 +79,11 @@ function imprimirRecibo(d: ReciboData) {
     <div class="sep"></div>
     <div class="row"><span>Subtotal</span><span>${formatRD(d.subtotal)}</span></div>
     ${d.descuento > 0 ? `<div class="row"><span>Descuento</span><span>-${formatRD(d.descuento)}</span></div>` : ""}
+    <div class="row"><span>ITBIS (18%)</span><span>${d.itbis > 0 ? formatRD(d.itbis) : "Exento"}</span></div>
     <div class="row total"><span>Total</span><span>${formatRD(d.total)}</span></div>
     <div class="row"><span>Pago</span><span>${metodoLabel(d.metodo)}</span></div>
     ${d.metodo === "efectivo" ? `<div class="row"><span>Cambio</span><span>${formatRD(d.cambio)}</span></div>` : ""}
-    <div class="foot">Documento de ejemplo generado para demostración.<br>NCF simulado, no certificado ante la DGII.</div>
+    <div class="foot">Documento de ejemplo generado para demostración.<br>ITBIS y NCF simulados, no certificado ante la DGII.</div>
   </div><script>window.onload=function(){window.print()}</script></body></html>`;
   const w = window.open("", "_blank", "width=420,height=640");
   if (!w) return;
@@ -134,6 +137,7 @@ export function Receipt({ data, onClose }: { data: ReciboData | null; onClose: (
             <div className="space-y-1">
               <Row label="Subtotal" value={formatRD(data.subtotal)} />
               {data.descuento > 0 && <Row label="Descuento" value={`-${formatRD(data.descuento)}`} />}
+              <Row label="ITBIS (18%)" value={data.itbis > 0 ? formatRD(data.itbis) : "Exento"} />
               <div className="flex items-center justify-between pt-0.5">
                 <span className="text-sm font-semibold">Total</span>
                 <span className="tabular text-xl font-bold tracking-tight">{formatRD(data.total)}</span>
@@ -149,7 +153,7 @@ export function Receipt({ data, onClose }: { data: ReciboData | null; onClose: (
 
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2.5 text-[11px] text-warning">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <p>Documento de ejemplo generado para demostración. NCF simulado, no certificado ante la DGII.</p>
+            <p>ITBIS simulado para demostración. El tratamiento fiscal real (exenciones, tasas) se configura y verifica en producción. NCF simulado, no certificado ante la DGII.</p>
           </div>
 
           {/* Acciones */}

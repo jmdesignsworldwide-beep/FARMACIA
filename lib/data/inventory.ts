@@ -18,6 +18,7 @@ export type Producto = {
   margen_pct: number;
   controlado: boolean;
   requiere_receta: boolean;
+  itbis_gravado: boolean;
   stock_minimo: number;
   unidades_por_caja: number;
   vende_caja: boolean;

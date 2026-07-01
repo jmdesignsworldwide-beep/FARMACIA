@@ -25,6 +25,7 @@ import { Receipt, type ReciboData } from "./receipt";
 import { registrarVenta } from "@/app/(app)/ventas/actions";
 import { METODOS_PAGO } from "@/lib/data/ventas-shared";
 import { precioModo, unidadesPorModo, modoPorDefecto, presentacionEtiqueta, type ModoVenta } from "@/lib/data/presentacion-shared";
+import { calcularDesglose } from "@/lib/data/itbis-shared";
 import { formatRD, cn } from "@/lib/utils";
 import type { ProductoVendible, LoteVendible } from "@/lib/data/ventas-shared";
 import type { ClienteBasico } from "@/lib/data/clientes-shared";
@@ -135,8 +136,16 @@ export function POS({
   const sinFiltro = !query.trim() && !categoria && !proveedorSel;
 
   const cliente = clientesAll.find((c) => c.id === clienteId) ?? null;
-  const subtotal = cart.reduce((s, l) => s + precioModo(l.producto, l.modo) * l.cantidad, 0);
-  const total = Math.max(subtotal - descuento, 0);
+  // Desglose de ITBIS en vivo (misma fórmula que el servidor; el total es la fuente
+  // de verdad al cobrar lo recalcula el RPC sobre productos.itbis_gravado).
+  const desglose = calcularDesglose(
+    cart.map((l) => ({ base: precioModo(l.producto, l.modo) * l.cantidad, gravado: l.producto.itbis_gravado })),
+    descuento,
+  );
+  const subtotal = desglose.subtotal;
+  const itbis = desglose.itbis;
+  const total = desglose.total;
+  const hayGravado = cart.some((l) => l.producto.itbis_gravado);
   const cambio = metodo === "efectivo" ? Math.max(recibido - total, 0) : 0;
   const itemCount = cart.reduce((s, l) => s + l.cantidad, 0);
 
@@ -238,8 +247,9 @@ export function POS({
         farmacia,
         empleado,
         metodo,
-        subtotal,
-        descuento,
+        subtotal: res.subtotal ?? subtotal,
+        descuento: res.descuento ?? descuento,
+        itbis: res.itbis ?? 0,
         total: res.total!,
         cambio: res.cambio!,
         clienteNombre: cliente?.nombre ?? null,
@@ -385,6 +395,33 @@ export function POS({
           <div className="flex items-center gap-2">
             <label className="text-xs text-muted-foreground">Descuento</label>
             <Input type="number" min="0" step="0.01" value={descuento || ""} onChange={(e) => setDescuento(Math.max(0, Number(e.target.value) || 0))} className="h-9 w-28 py-1.5" placeholder="RD$ 0.00" />
+          </div>
+
+          {/* Desglose fiscal: Subtotal · (Descuento) · ITBIS · Total */}
+          <div className="space-y-1 rounded-xl border border-border/60 bg-card/40 px-3 py-2.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="tabular font-medium">{formatRD(subtotal)}</span>
+            </div>
+            {desglose.descuento > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Descuento</span>
+                <span className="tabular font-medium text-danger">-{formatRD(desglose.descuento)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1 text-muted-foreground">
+                ITBIS (18%)
+                {!hayGravado && <span className="text-[10px] font-medium text-success">· exento</span>}
+              </span>
+              <span className="tabular font-medium">{formatRD(itbis)}</span>
+            </div>
+            <p className="pt-0.5 text-[10px] leading-snug text-muted-foreground/80">
+              {hayGravado
+                ? "ITBIS solo sobre los productos gravados. "
+                : "Todos los productos del carrito están exentos de ITBIS. "}
+              <span className="text-warning/90">Simulado para demostración.</span>
+            </p>
           </div>
 
           <div className="flex items-end justify-between gap-3">
